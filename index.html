@@ -1118,7 +1118,7 @@
       <div class="section-card">
         <h3>Sincronización con Google Sheets y Google Calendar</h3>
         <p class="sub" style="margin:-6px 0 16px">
-          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes y cotizaciones — y para que varias computadoras compartan la misma información. Tanto los <strong>clientes</strong> como las <strong>cotizaciones</strong> se sincronizan en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja (revisando cada 20 segundos), y lo que cambie en otra computadora que tenga el sistema conectado a esta misma hoja aparece aquí también. Si dos computadoras editan la misma cotización casi al mismo tiempo, gana la que se guardó de último. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
+          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes, tu catálogo de productos y tus cotizaciones — y para que varias computadoras compartan la misma información. Los <strong>clientes</strong>, los <strong>productos</strong> (catálogo de servicios con precios) y las <strong>cotizaciones</strong> se sincronizan en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja (revisando cada 20 segundos), y lo que cambie en otra computadora que tenga el sistema conectado a esta misma hoja aparece aquí también. Si dos computadoras editan la misma cotización casi al mismo tiempo, gana la que se guardó de último. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
         </p>
         <div class="form-grid">
           <div class="field" style="grid-column:1/-1">
@@ -1772,12 +1772,16 @@ document.getElementById('btn-guardar-producto').addEventListener('click', ()=>{
     categoria: document.getElementById('p-categoria').value.trim(),
     precio: parseFloat(document.getElementById('p-precio').value)||0,
   };
+  let productoGuardado;
   if(editingProductId){
-    Object.assign(products.find(x=>x.id===editingProductId), data);
+    productoGuardado = products.find(x=>x.id===editingProductId);
+    Object.assign(productoGuardado, data);
   }else{
-    products.push({id:uid(), ...data});
+    productoGuardado = {id:uid(), ...data};
+    products.push(productoGuardado);
   }
   save(LS.products, products);
+  enviarProductoASheets(productoGuardado, 'guardar');
   closeModal('modal-producto');
   renderProductos();
   refreshProductoSelects();
@@ -1785,8 +1789,10 @@ document.getElementById('btn-guardar-producto').addEventListener('click', ()=>{
 });
 function eliminarProducto(id){
   if(!confirm('¿Eliminar este producto del catálogo?')) return;
+  const producto = products.find(p=>p.id===id);
   products = products.filter(p=>p.id!==id);
   save(LS.products, products);
+  if(producto) enviarProductoASheets(producto, 'eliminar');
   renderProductos();
   refreshProductoSelects();
   toast('Producto eliminado');
@@ -2658,9 +2664,11 @@ document.getElementById('btn-guardar-ajustes').addEventListener('click', ()=>{
      - Clientes: GET devuelve la lista de la hoja "Clientes"; POST
        crea/actualiza/elimina uno. Es bidireccional (se hace polling cada
        20 segundos para traer cambios hechos directamente en la hoja).
-     - Cotizaciones: POST crea/actualiza/elimina una fila en la hoja
-       "Cotizaciones" cada vez que se guarda/cambia estado/elimina una
-       cotización aquí. Es de ida solamente (no hay polling de vuelta).
+     - Productos: igual que clientes, pero contra la hoja "Productos"
+       (catálogo de servicios con precio). También bidireccional.
+     - Cotizaciones: igual que clientes, pero contra la hoja
+       "Cotizaciones", con resolución de conflictos por fecha de última
+       actualización (gana el cambio más reciente). También bidireccional.
      - Calendario: Code.gs, al recibir una cotización con fecha de evento,
        crea o actualiza un evento en Google Calendar; si el estado pasa a
        "Declinado" o la cotización se elimina, borra ese evento.
@@ -2789,6 +2797,18 @@ async function enviarClienteASheets(cliente, accion){
   }
 }
 
+/* Envía un producto del catálogo (nombre/categoría/precio) a la hoja
+   "Productos". Misma idea que enviarClienteASheets: en ambas direcciones. */
+async function enviarProductoASheets(producto, accion){
+  if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
+  try{
+    await sheetsPostViaForm({ entidad: 'producto', accion: accion, datos: producto });
+  }catch(err){
+    console.error('No se pudo enviar el producto a Google Sheets:', err);
+    actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
+  }
+}
+
 /* Envía una cotización a la hoja "Cotizaciones". El propio Code.gs, al
    recibir esto, también crea/actualiza/borra el evento correspondiente en
    Google Calendar. (Los cambios hechos en OTRA computadora, o a mano en
@@ -2867,6 +2887,65 @@ async function sincronizarClientesDesdeSheets(manual){
     if(manual) toast('No se pudo conectar con Google Sheets');
   }finally{
     sheetsSincronizando = false;
+  }
+}
+
+/* Trae el catálogo de productos (nombre/categoría/precio) desde la hoja
+   "Productos" y lo mezcla con el local por id — mismo mecanismo que
+   sincronizarClientesDesdeSheets (agrega/actualiza/borra por comparación
+   de campos, y respeta los productos creados aquí que aún no se han
+   confirmado en la hoja). */
+let sheetsProductosSincronizando = false;
+async function sincronizarProductosDesdeSheets(manual){
+  if(!settings.sheetsUrl){
+    if(manual) toast('Configura primero la URL de la aplicación web');
+    return;
+  }
+  if(sheetsProductosSincronizando) return;
+  sheetsProductosSincronizando = true;
+  try{
+    const datos = await sheetsGetJSONP('productos');
+    if(!datos || !Array.isArray(datos.productos)){
+      throw new Error('Respuesta inesperada de la hoja');
+    }
+    const remotos = datos.productos.map(r => ({
+      id: String(r.id||'').trim() || uid(),
+      nombre: r.nombre||'',
+      categoria: r.categoria||'',
+      precio: Number(r.precio)||0,
+    })).filter(p => p.nombre);
+
+    const idsRemotos = new Set(remotos.map(p=>p.id));
+    let cambios = false;
+
+    const camposComparables = ['nombre','categoria','precio'];
+    remotos.forEach(rp=>{
+      const local = products.find(p=>p.id===rp.id);
+      if(!local){
+        products.push(Object.assign({}, rp, {_deSheets:true}));
+        cambios = true;
+      } else {
+        const cambioCampos = camposComparables.some(k => (local[k]||'') !== (rp[k]||''));
+        if(cambioCampos){ Object.assign(local, rp); cambios = true; }
+        local._deSheets = true;
+      }
+    });
+    const antes = products.length;
+    products = products.filter(p => idsRemotos.has(p.id) || !p._deSheets);
+    if(products.length !== antes) cambios = true;
+
+    if(cambios){
+      save(LS.products, products);
+      renderProductos();
+      refreshProductoSelects();
+    }
+    actualizarEstadoSheetsUI('🟢 Sincronizado con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
+    if(manual) toast('Productos sincronizados con Google Sheets');
+  }catch(err){
+    console.error('Error sincronizando productos con Google Sheets:', err);
+    if(manual) toast('No se pudo conectar con Google Sheets');
+  }finally{
+    sheetsProductosSincronizando = false;
   }
 }
 
@@ -2990,9 +3069,11 @@ function iniciarPollingSheets(){
     // datos existentes al instante en vez de tener que esperar los
     // primeros 20 segundos.
     sincronizarClientesDesdeSheets(false);
+    sincronizarProductosDesdeSheets(false);
     sincronizarCotizacionesDesdeSheets(false);
     sheetsPollTimer = setInterval(()=>{
       sincronizarClientesDesdeSheets(false);
+      sincronizarProductosDesdeSheets(false);
       sincronizarCotizacionesDesdeSheets(false);
     }, 20000);
   }
@@ -3027,31 +3108,38 @@ document.getElementById('btn-probar-sheets').addEventListener('click', async ()=
 });
 document.getElementById('btn-sync-ahora').addEventListener('click', ()=>{
   sincronizarClientesDesdeSheets(true);
+  sincronizarProductosDesdeSheets(true);
   sincronizarCotizacionesDesdeSheets(true);
 });
 
 /* Envío único de todo lo que ya existía en el sistema antes de conectar
-   Google Sheets (clientes y cotizaciones). Se envía de uno en uno (no en
-   paralelo) porque el envío por <form>+iframe oculto comparte un solo
-   iframe — mandar varios a la vez pisaría las respuestas entre sí. */
+   Google Sheets (clientes, productos y cotizaciones). Se envía de uno en
+   uno (no en paralelo) porque el envío por <form>+iframe oculto comparte
+   un solo iframe — mandar varios a la vez pisaría las respuestas entre sí. */
 async function enviarTodoASheets(){
   const url = document.getElementById('s-sheets-url').value.trim();
   if(!url){ toast('Escribe primero la URL de la aplicación web'); return; }
   settings.sheetsUrl = url;
 
   const btn = document.getElementById('btn-enviar-todo-sheets');
-  const total = clients.length + quotes.length;
-  if(total === 0){ toast('No hay clientes ni cotizaciones que enviar'); return; }
-  if(!confirm(`Se van a enviar ${clients.length} cliente(s) y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
+  const total = clients.length + products.length + quotes.length;
+  if(total === 0){ toast('No hay clientes, productos ni cotizaciones que enviar'); return; }
+  if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s) y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
 
   btn.disabled = true;
-  let hecho = 0, okClientes = 0, falloClientes = 0, okCotizaciones = 0, falloCotizaciones = 0;
+  let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okCotizaciones = 0, falloCotizaciones = 0;
 
   for(const c of clients){
     hecho++;
     actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
     try{ await sheetsPostViaForm({ entidad:'cliente', accion:'guardar', datos:c }); okClientes++; }
     catch(err){ falloClientes++; console.error('Error enviando cliente existente:', c.nombre, err); }
+  }
+  for(const p of products){
+    hecho++;
+    actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
+    try{ await sheetsPostViaForm({ entidad:'producto', accion:'guardar', datos:p }); okProductos++; }
+    catch(err){ falloProductos++; console.error('Error enviando producto existente:', p.nombre, err); }
   }
   for(const q of quotes){
     hecho++;
@@ -3061,9 +3149,9 @@ async function enviarTodoASheets(){
   }
 
   btn.disabled = false;
-  const hayFallos = falloClientes || falloCotizaciones;
-  const resumen = `Enviados ${okClientes} cliente(s) y ${okCotizaciones} cotización(es).` +
-    (hayFallos ? ` Fallaron ${falloClientes} cliente(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
+  const hayFallos = falloClientes || falloProductos || falloCotizaciones;
+  const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s) y ${okCotizaciones} cotización(es).` +
+    (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
   actualizarEstadoSheetsUI((hayFallos ? '⚠️ ' : '🟢 ') + resumen, hayFallos ? 'error' : 'ok');
   toast(resumen);
 }
