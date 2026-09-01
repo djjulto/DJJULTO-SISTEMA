@@ -160,12 +160,22 @@
   .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 
   /* ---------- CARDS / PANEL ---------- */
+  .panel-seccion-titulo{
+    font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+    color:var(--gris-osc);margin:0 0 10px;
+  }
+  .panel-seccion-hint{font-weight:500;text-transform:none;letter-spacing:0;color:var(--gris);font-size:12px}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
   .card{background:#fff;border-radius:var(--radio-lg);padding:19px;box-shadow:var(--sombra);border:1px solid var(--borde);transition:transform .2s var(--ease), box-shadow .2s var(--ease)}
   .card:hover{transform:translateY(-3px);box-shadow:var(--sombra-lg)}
-  .card .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .card .card-ico{width:22px;height:22px;display:inline-flex}
+  .card.clickable{cursor:pointer}
+  .card.clickable:active{transform:translateY(-1px) scale(.99)}
+  .card .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .card-ico-wrap{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none}
+  .card .card-ico{width:19px;height:19px;display:inline-flex}
   .card .card-ico svg{width:100%;height:100%}
+  .card-arrow{font-size:15px;color:var(--gris);opacity:0;transform:translateX(-3px);transition:transform .18s var(--ease), opacity .18s var(--ease)}
+  .card.clickable:hover .card-arrow{opacity:.7;transform:translateX(0)}
   .card .card-val{font-size:27px;font-weight:800;letter-spacing:-.4px}
   .card .card-label{font-size:12px;color:var(--gris);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
   .card.pendiente{border-top:4px solid var(--amarillo)}
@@ -176,6 +186,43 @@
 
   .panel-block{background:#fff;border-radius:var(--radio-lg);padding:22px;box-shadow:var(--sombra);border:1px solid var(--borde)}
   .panel-block h3{margin-top:0;font-size:16px}
+
+  /* ---------- Calendario ---------- */
+  .calendario-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+  .calendario-nav{display:flex;align-items:center;gap:12px}
+  .calendario-mes-label{font-size:17px;font-weight:800;min-width:170px;text-align:center}
+  .calendario-nav-btn{
+    width:32px;height:32px;border-radius:50%;border:1px solid var(--borde);background:#fff;color:var(--negro);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;line-height:1;
+    transition:background .15s var(--ease), border-color .15s var(--ease);
+  }
+  .calendario-nav-btn:hover{background:var(--gris-claro);border-color:var(--rojo-claro)}
+  .calendario-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .calendario-diasem{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--gris);text-align:center;padding-bottom:2px;letter-spacing:.4px}
+  .calendario-dia{
+    background:#fff;border:1px solid var(--borde);border-radius:10px;min-height:92px;padding:7px;
+    display:flex;flex-direction:column;gap:4px;overflow:hidden;
+  }
+  .calendario-dia.fuera-de-mes{background:var(--gris-claro)}
+  .calendario-dia.fuera-de-mes .calendario-dia-num{opacity:.4}
+  .calendario-dia.hoy{border-color:var(--rojo);box-shadow:0 0 0 2px var(--rojo-claro)}
+  .calendario-dia-num{font-size:12px;font-weight:700;color:var(--gris-osc)}
+  .calendario-evento{
+    font-size:10.5px;font-weight:700;padding:3px 6px;border-radius:6px;cursor:pointer;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform .12s var(--ease);
+  }
+  .calendario-evento:hover{transform:translateX(1px) scale(1.02)}
+  .calendario-evento.Confirmada{background:var(--azul-suave);color:#2C5C86}
+  .calendario-evento.Completada{background:var(--menta-suave);color:#2F7D57}
+  .calendario-mas{font-size:9.5px;color:var(--gris);font-weight:700;padding-left:2px}
+  .calendario-leyenda{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;font-size:12.5px;color:var(--gris-osc)}
+  .calendario-leyenda span{display:inline-flex;align-items:center;gap:6px}
+  .calendario-leyenda i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  @media (max-width:720px){
+    .calendario-dia{min-height:64px;padding:5px;border-radius:8px}
+    .calendario-evento{font-size:9px;padding:2px 4px}
+    .calendario-mes-label{min-width:0;font-size:15px}
+  }
 
   /* ---------- TABLE ---------- */
   .table-wrap{background:#fff;border-radius:var(--radio-lg);box-shadow:var(--sombra);border:1px solid var(--borde);overflow:hidden}
@@ -538,9 +585,9 @@
   .welcome-overlay{
     position:fixed;inset:0;z-index:5000;
     background:
-      radial-gradient(ellipse 90% 60% at 50% 100%, rgba(255,90,30,.22), transparent 70%),
-      radial-gradient(ellipse 70% 40% at 15% 0%, rgba(120,20,40,.18), transparent 70%),
-      #0c0708;
+      radial-gradient(ellipse 90% 60% at 50% 100%, rgba(214,40,40,.22), transparent 70%),
+      radial-gradient(ellipse 70% 40% at 15% 0%, rgba(158,27,27,.18), transparent 70%),
+      #0A0A0A;
     overflow:hidden;display:flex;align-items:center;justify-content:center;
     transition:opacity .5s ease, visibility .5s ease;
   }
@@ -548,13 +595,13 @@
   .welcome-fx{position:absolute;inset:0;width:100%;height:100%;display:block}
   .welcome-scroll{position:relative;z-index:2;width:100%;height:100%;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:32px 20px}
 
-  .welcome-screen{display:none;flex-direction:column;align-items:center;text-align:center;max-width:640px;margin:auto;color:#f5ece2}
+  .welcome-screen{display:none;flex-direction:column;align-items:center;text-align:center;max-width:640px;margin:auto;color:#F3E9E9}
   .welcome-screen.active{display:flex}
 
   .welcome-photo-wrap{
     width:150px;height:150px;border-radius:50%;overflow:hidden;flex:none;
-    border:3px solid rgba(255,180,110,.65);
-    box-shadow:0 0 0 6px rgba(255,120,40,.10), 0 0 34px rgba(255,110,40,.45);
+    border:3px solid rgba(214,40,40,.65);
+    box-shadow:0 0 0 6px rgba(214,40,40,.10), 0 0 34px rgba(214,40,40,.45);
     animation:welcomeApareceFoto .8s cubic-bezier(.2,.9,.25,1) both, welcomeGlowPulso 3.2s ease-in-out .8s infinite;
   }
   .welcome-photo-wrap img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
@@ -567,31 +614,31 @@
     animation:welcomeApareceArriba .7s ease .25s both, fuego3dFlote 3.6s ease-in-out .95s infinite;
   }
   .welcome-title span{
-    background:linear-gradient(90deg,#ffd27a,#ff7a3d,#ff4d4d,#ffd27a);
+    background:linear-gradient(90deg,#F4B6B6,#D62828,#9E1B1B,#F4B6B6);
     background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
     animation:welcomeFuegoTexto 4s linear infinite;
   }
 
   .welcome-show-desc{
     margin-top:18px;padding:18px 22px;border-radius:16px;max-width:560px;
-    background:rgba(255,255,255,.05);border:1px solid rgba(255,170,110,.22);backdrop-filter:blur(2px);
+    background:rgba(255,255,255,.05);border:1px solid rgba(214,40,40,.22);backdrop-filter:blur(2px);
     opacity:0;animation:welcomeApareceArriba .7s ease .45s both;
   }
   .welcome-show-desc h2{
-    margin:0 0 10px;font-size:14px;letter-spacing:2.5px;font-weight:800;color:#ffb26b;
+    margin:0 0 10px;font-size:14px;letter-spacing:2.5px;font-weight:800;color:#F4B6B6;
   }
-  .welcome-show-desc p{margin:0 0 10px;font-size:14.5px;line-height:1.65;color:#efe4da;font-style:italic}
+  .welcome-show-desc p{margin:0 0 10px;font-size:14.5px;line-height:1.65;color:#EFE0E0;font-style:italic}
   .welcome-show-desc p:last-child{margin-bottom:0}
 
   .welcome-btn-siguiente{
     margin-top:26px;padding:13px 34px;border:none;border-radius:999px;cursor:pointer;
-    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.3px;color:#1a0e08;
-    background:linear-gradient(90deg,#ffcf6b,#ff7a3d);
-    box-shadow:0 10px 26px rgba(255,110,40,.35);
+    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.3px;color:#fff;
+    background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));
+    box-shadow:0 10px 26px rgba(214,40,40,.35);
     transition:transform .18s ease, box-shadow .18s ease;
     opacity:0;animation:welcomeApareceArriba .7s ease .65s both;
   }
-  .welcome-btn-siguiente:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(255,110,40,.45)}
+  .welcome-btn-siguiente:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(214,40,40,.45)}
 
   .welcome-title-chica{
     font-size:22px;font-weight:800;margin:0 0 26px;opacity:0;animation:welcomeApareceArriba .6s ease .1s both;
@@ -599,22 +646,22 @@
   .welcome-opciones{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
   .welcome-opcion{
     width:230px;padding:26px 20px;border-radius:18px;cursor:pointer;font-family:inherit;text-align:center;
-    background:rgba(255,255,255,.05);border:1px solid rgba(255,170,110,.22);color:#f5ece2;
+    background:rgba(255,255,255,.05);border:1px solid rgba(214,40,40,.22);color:#F3E9E9;
     display:flex;flex-direction:column;align-items:center;gap:10px;
     transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     opacity:0;animation:welcomeApareceArriba .6s ease .25s both;
   }
-  .welcome-opcion:hover{transform:translateY(-4px);border-color:rgba(255,170,110,.55);background:rgba(255,255,255,.09);box-shadow:0 14px 30px rgba(255,110,40,.25)}
-  .welcome-opcion .ico{width:44px;height:44px;border-radius:12px;background:rgba(255,170,110,.14);display:flex;align-items:center;justify-content:center;color:#ffb26b}
+  .welcome-opcion:hover{transform:translateY(-4px);border-color:rgba(214,40,40,.55);background:rgba(255,255,255,.09);box-shadow:0 14px 30px rgba(214,40,40,.25)}
+  .welcome-opcion .ico{width:44px;height:44px;border-radius:12px;background:rgba(214,40,40,.14);display:flex;align-items:center;justify-content:center;color:#F4B6B6}
   .welcome-opcion .ico svg{width:24px;height:24px}
   .welcome-opcion strong{font-size:16px}
-  .welcome-opcion .sub{margin:0;font-size:12.5px;color:#cbb9ab}
+  .welcome-opcion .sub{margin:0;font-size:12.5px;color:#C9A8A8}
 
   @keyframes welcomeApareceFoto{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
   @keyframes welcomeApareceArriba{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
   @keyframes welcomeGlowPulso{
-    0%,100%{box-shadow:0 0 0 6px rgba(255,120,40,.10), 0 0 34px rgba(255,110,40,.45)}
-    50%{box-shadow:0 0 0 9px rgba(255,140,60,.16), 0 0 54px rgba(255,130,50,.65)}
+    0%,100%{box-shadow:0 0 0 6px rgba(214,40,40,.10), 0 0 34px rgba(214,40,40,.45)}
+    50%{box-shadow:0 0 0 9px rgba(214,40,40,.16), 0 0 54px rgba(214,40,40,.65)}
   }
   @keyframes welcomeFuegoTexto{0%{background-position:0% 50%}100%{background-position:300% 50%}}
 
@@ -622,8 +669,8 @@
   .fuego-3d{
     display:inline-block;
     text-shadow:
-      0 1px 0 #7a2410, 0 2px 0 #6e1f0d, 0 3px 0 #631b0b, 0 4px 0 #571609,
-      0 6px 10px rgba(0,0,0,.55), 0 0 26px rgba(255,120,40,.55), 0 0 46px rgba(255,90,30,.3);
+      0 1px 0 #5c1616, 0 2px 0 #4a1212, 0 3px 0 #3d0f0f, 0 4px 0 #2e0b0b,
+      0 6px 10px rgba(0,0,0,.55), 0 0 26px rgba(214,40,40,.55), 0 0 46px rgba(158,27,27,.3);
     transform:perspective(600px) rotateX(0deg);
     animation:fuego3dFlote 3.6s ease-in-out infinite;
   }
@@ -638,8 +685,8 @@
   .welcome-title-chica.fuego-3d{
     animation:welcomeApareceArriba .6s ease .1s both, fuego3dFlote 3.6s ease-in-out .7s infinite;
   }
-  .welcome-volver{color:#e9d9c8}
-  .welcome-volver:hover{color:#ffb26b}
+  .welcome-volver{color:#E6D5D5}
+  .welcome-volver:hover{color:#F4B6B6}
 
   /* ---------- Carrusel de shows ---------- */
   .welcome-carrusel{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:6px;width:100%}
@@ -647,46 +694,46 @@
   .carrusel-slide{
     position:absolute;inset:0;border:none;padding:0;margin:0;border-radius:16px;overflow:hidden;cursor:pointer;
     background:#000;opacity:0;transform:scale(.9) rotateY(8deg);pointer-events:none;
-    box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,170,110,.18);
+    box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(214,40,40,.18);
     transition:opacity .5s ease, transform .5s ease;
   }
   .carrusel-slide.active{opacity:1;transform:scale(1) rotateY(0);pointer-events:auto;animation:carruselGlow 2.6s ease-in-out infinite}
   .carrusel-slide img{width:100%;height:100%;object-fit:cover;display:block}
   @keyframes carruselGlow{
-    0%,100%{box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,170,110,.18), 0 0 24px rgba(255,110,40,.25)}
-    50%{box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,170,110,.4), 0 0 40px rgba(255,110,40,.5)}
+    0%,100%{box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(214,40,40,.18), 0 0 24px rgba(214,40,40,.25)}
+    50%{box-shadow:0 18px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(214,40,40,.4), 0 0 40px rgba(214,40,40,.5)}
   }
   .carrusel-flecha{
-    flex:none;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,170,110,.3);
-    background:rgba(255,255,255,.06);color:#f5ece2;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    flex:none;width:38px;height:38px;border-radius:50%;border:1px solid rgba(214,40,40,.3);
+    background:rgba(255,255,255,.06);color:#F3E9E9;cursor:pointer;display:flex;align-items:center;justify-content:center;
     transition:background .15s ease, transform .15s ease;
   }
   .carrusel-flecha svg{width:18px;height:18px}
-  .carrusel-flecha:hover{background:rgba(255,170,110,.18);transform:scale(1.08)}
+  .carrusel-flecha:hover{background:rgba(214,40,40,.18);transform:scale(1.08)}
   .carrusel-dots{display:flex;gap:9px;justify-content:center;margin-top:18px}
   .carrusel-dot{width:9px;height:9px;border-radius:50%;border:none;background:rgba(255,255,255,.25);cursor:pointer;padding:0;transition:background .2s ease, transform .2s ease}
-  .carrusel-dot.active{background:#ff9a4d;transform:scale(1.25)}
-  .welcome-carrusel-ayuda{margin:16px 0 0;font-size:12.5px;color:#cbb9ab}
+  .carrusel-dot.active{background:var(--rojo);transform:scale(1.25)}
+  .welcome-carrusel-ayuda{margin:16px 0 0;font-size:12.5px;color:#C9A8A8}
 
   /* ---------- Detalle de paquete (impactante) ---------- */
   #welcome-screen-detalle .welcome-title{margin-top:6px}
   .detalle-lista{width:100%;max-width:480px;margin-top:22px;display:flex;flex-direction:column;gap:11px}
   .detalle-item{
     display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:12px;text-align:left;
-    background:rgba(255,255,255,.05);border:1px solid rgba(255,170,110,.18);
+    background:rgba(255,255,255,.05);border:1px solid rgba(214,40,40,.18);
     opacity:0;transform:translateX(-16px);animation:detalleItemEntra .5s ease both;
   }
   .detalle-item .ico{font-size:19px;flex:none;width:30px;text-align:center;margin-top:1px}
   .detalle-item-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
   .detalle-item-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .detalle-item .txt{font-weight:700;font-size:15px;letter-spacing:.2px}
-  .detalle-item .cant{font-size:12px;color:#cbb9ab;font-weight:600;flex:none}
-  .detalle-item-desc{margin:0;font-size:12.5px;line-height:1.5;color:#cbb9ab;font-weight:500}
+  .detalle-item .cant{font-size:12px;color:#C9A8A8;font-weight:600;flex:none}
+  .detalle-item-desc{margin:0;font-size:12.5px;line-height:1.5;color:#C9A8A8;font-weight:500}
   @keyframes detalleItemEntra{to{opacity:1;transform:translateX(0)}}
   .detalle-total{
     margin-top:24px;padding:14px 30px;border-radius:14px;display:flex;align-items:center;gap:14px;
-    background:linear-gradient(90deg,#ffcf6b,#ff7a3d);color:#1a0e08;
-    box-shadow:0 14px 32px rgba(255,110,40,.4);
+    background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));color:#fff;
+    box-shadow:0 14px 32px rgba(214,40,40,.4);
     opacity:0;animation:welcomeApareceArriba .6s ease .3s both;
   }
   .detalle-total-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
@@ -726,6 +773,9 @@
     </symbol>
     <symbol id="ico-ajustes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.3M12 18.2v2.3M4.9 6.2l1.8 1.5M17.3 16.3l1.8 1.5M3.5 12h2.3M18.2 12h2.3M4.9 17.8l1.8-1.5M17.3 7.7l1.8-1.5"/>
+    </symbol>
+    <symbol id="ico-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v3.6M16 3v3.6"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.3h2M11 16.3h2"/>
     </symbol>
     <symbol id="ico-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none"/>
@@ -866,6 +916,7 @@
       <button data-view="productos" title="Productos"><span class="ico"><svg><use href="#ico-productos"></use></svg></span><span class="txt">Productos</span></button>
       <button data-view="paquetes" title="Paquetes de Show"><span class="ico"><svg><use href="#ico-paquete"></use></svg></span><span class="txt">Paquetes de Show</span></button>
       <button data-view="cotizaciones" title="Cotizaciones"><span class="ico"><svg><use href="#ico-cotizaciones"></use></svg></span><span class="txt">Cotizaciones</span></button>
+      <button data-view="calendario" title="Calendario"><span class="ico"><svg><use href="#ico-calendario"></use></svg></span><span class="txt">Calendario</span></button>
       <button data-view="nueva" title="Nueva Cotización"><span class="ico"><svg><use href="#ico-nueva"></use></svg></span><span class="txt">Nueva Cotización</span></button>
     </nav>
 
@@ -892,8 +943,15 @@
           <h2>Panel</h2>
           <div class="sub">Resumen general del negocio</div>
         </div>
+        <button class="btn" data-view="nueva">+ Nueva Cotización</button>
       </div>
-      <div class="cards" id="panel-cards"></div>
+
+      <h3 class="panel-seccion-titulo">Negocio</h3>
+      <div class="cards" id="panel-cards-negocio"></div>
+
+      <h3 class="panel-seccion-titulo">Estado de cotizaciones <span class="panel-seccion-hint">(clic para ver el detalle)</span></h3>
+      <div class="cards" id="panel-cards-estados"></div>
+
       <div class="panel-block">
         <h3>Últimas cotizaciones</h3>
         <div class="table-wrap">
@@ -974,6 +1032,28 @@
       <div id="cotizaciones-grupos"></div>
     </section>
 
+    <!-- CALENDARIO -->
+    <section class="view" id="view-calendario">
+      <div class="view-header">
+        <div><h2>Calendario</h2><div class="sub">Fechas confirmadas y completadas — control de agenda</div></div>
+      </div>
+      <div class="panel-block">
+        <div class="calendario-header">
+          <div class="calendario-nav">
+            <button type="button" class="calendario-nav-btn" id="btn-cal-prev" aria-label="Mes anterior">‹</button>
+            <div class="calendario-mes-label" id="calendario-mes-label"></div>
+            <button type="button" class="calendario-nav-btn" id="btn-cal-next" aria-label="Mes siguiente">›</button>
+          </div>
+          <button class="btn secondary small" id="btn-cal-hoy">Hoy</button>
+        </div>
+        <div class="calendario-grid" id="calendario-grid"></div>
+        <div class="calendario-leyenda">
+          <span><i style="background:var(--azul)"></i> Confirmada por el cliente</span>
+          <span><i style="background:var(--verde)"></i> Completada</span>
+        </div>
+      </div>
+    </section>
+
     <!-- NUEVA COTIZACION -->
     <section class="view" id="view-nueva">
       <div class="view-header">
@@ -1005,7 +1085,8 @@
         <h3>Datos del evento</h3>
         <div class="form-grid">
           <div class="field"><label>Fecha del evento</label><input type="date" id="q-fecha-evento"></div>
-          <div class="field"><label>Hora del evento</label><input type="time" id="q-hora-evento"></div>
+          <div class="field"><label>Hora de inicio</label><input type="time" id="q-hora-evento"></div>
+          <div class="field"><label>Hora de fin</label><input type="time" id="q-hora-fin"></div>
           <div class="field"><label>Lugar del evento</label><input type="text" id="q-lugar-evento" placeholder="Salón, residencia, dirección..."></div>
           <div class="field"><label>Tipo de actividad</label><input type="text" id="q-tipo-actividad" placeholder="Boda, cumpleaños, corporativo..."></div>
           <div class="field"><label>Nombre del show/paquete</label><input type="text" id="q-nombre-show"></div>
@@ -1555,6 +1636,7 @@ function goToView(name){
   if(name === 'productos') renderProductos();
   if(name === 'paquetes') renderPaquetesEditor();
   if(name === 'cotizaciones') renderCotizaciones();
+  if(name === 'calendario') renderCalendario();
   if(name === 'nueva' && editingQuoteId === null) resetQuoteForm();
   if(name === 'ajustes') renderAjustes();
   cerrarMenuMovil();
@@ -1608,6 +1690,15 @@ document.getElementById('logo-input').addEventListener('change', function(e){
 /* =========================================================
    PANEL
    ========================================================= */
+/* Lleva a Cotizaciones ya filtrado por un estado específico — así las
+   tarjetas del Panel funcionan como acceso directo al detalle, no solo
+   como números estáticos. */
+function irACotizacionesFiltradas(estado){
+  goToView('cotizaciones');
+  const sel = document.getElementById('filtro-estado');
+  if(sel) sel.value = estado || '';
+  renderCotizaciones();
+}
 function renderPanel(){
   const pend = quotes.filter(q=>q.estado==='Pendiente').length;
   const conf = quotes.filter(q=>q.estado==='Confirmada').length;
@@ -1615,15 +1706,74 @@ function renderPanel(){
   const decl = quotes.filter(q=>q.estado==='Declinado').length;
   const totalFacturado = comp.reduce((s,q)=> s + (q.total||0), 0);
 
-  document.getElementById('panel-cards').innerHTML = `
-    <div class="card"><div class="card-top"><span class="card-ico" style="color:var(--gris)"><svg><use href="#ico-clientes"></use></svg></span></div><div class="card-val">${clients.length}</div><div class="card-label">Clientes</div></div>
-    <div class="card"><div class="card-top"><span class="card-ico" style="color:var(--gris)"><svg><use href="#ico-productos"></use></svg></span></div><div class="card-val">${products.length}</div><div class="card-label">Productos</div></div>
-    <div class="card pendiente"><div class="card-top"><span class="card-ico" style="color:var(--amarillo)"><svg><use href="#ico-reloj"></use></svg></span></div><div class="card-val">${pend}</div><div class="card-label">Pendientes</div></div>
-    <div class="card confirmada"><div class="card-top"><span class="card-ico" style="color:var(--azul)"><svg><use href="#ico-check"></use></svg></span></div><div class="card-val">${conf}</div><div class="card-label">Confirmadas</div></div>
-    <div class="card realizado"><div class="card-top"><span class="card-ico" style="color:var(--verde)"><svg><use href="#ico-check"></use></svg></span></div><div class="card-val">${comp.length}</div><div class="card-label">Completadas</div></div>
-    <div class="card declinado"><div class="card-top"><span class="card-ico" style="color:var(--rojoestado)"><svg><use href="#ico-equis-circulo"></use></svg></span></div><div class="card-val">${decl}</div><div class="card-label">Declinadas</div></div>
-    <div class="card total"><div class="card-top"><span class="card-ico" style="color:var(--negro)"><svg><use href="#ico-dinero"></use></svg></span></div><div class="card-val">${money(totalFacturado)}</div><div class="card-label">Total facturado</div></div>
+  document.getElementById('panel-cards-negocio').innerHTML = `
+    <div class="card clickable" data-ir-view="clientes">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--gris-claro)"><span class="card-ico" style="color:var(--gris-osc)"><svg><use href="#ico-clientes"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${clients.length}</div><div class="card-label">Clientes</div>
+    </div>
+    <div class="card clickable" data-ir-view="productos">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--gris-claro)"><span class="card-ico" style="color:var(--gris-osc)"><svg><use href="#ico-productos"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${products.length}</div><div class="card-label">Productos</div>
+    </div>
+    <div class="card clickable" data-ir-view="paquetes">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--rojo-claro)"><span class="card-ico" style="color:var(--rojo)"><svg><use href="#ico-productos"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${showPackages.length}</div><div class="card-label">Paquetes de show</div>
+    </div>
   `;
+
+  document.getElementById('panel-cards-estados').innerHTML = `
+    <div class="card pendiente clickable" data-ir-estado="Pendiente">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--durazno-suave)"><span class="card-ico" style="color:var(--amarillo)"><svg><use href="#ico-reloj"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${pend}</div><div class="card-label">Pendientes</div>
+    </div>
+    <div class="card confirmada clickable" data-ir-estado="Confirmada">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--azul-suave)"><span class="card-ico" style="color:var(--azul)"><svg><use href="#ico-check"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${conf}</div><div class="card-label">Confirmadas</div>
+    </div>
+    <div class="card realizado clickable" data-ir-estado="Completada">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--menta-suave)"><span class="card-ico" style="color:var(--verde)"><svg><use href="#ico-check"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${comp.length}</div><div class="card-label">Completadas</div>
+    </div>
+    <div class="card declinado clickable" data-ir-estado="Declinado">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--terracota-suave)"><span class="card-ico" style="color:var(--rojoestado)"><svg><use href="#ico-equis-circulo"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${decl}</div><div class="card-label">Declinadas</div>
+    </div>
+    <div class="card total clickable" data-ir-estado="Completada">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--negro)"><span class="card-ico" style="color:#fff"><svg><use href="#ico-dinero"></use></svg></span></span>
+        <span class="card-arrow">→</span>
+      </div>
+      <div class="card-val">${money(totalFacturado)}</div><div class="card-label">Total facturado</div>
+    </div>
+  `;
+
+  document.querySelectorAll('#panel-cards-negocio [data-ir-view]').forEach(el=>{
+    el.addEventListener('click', ()=> goToView(el.getAttribute('data-ir-view')));
+  });
+  document.querySelectorAll('#panel-cards-estados [data-ir-estado]').forEach(el=>{
+    el.addEventListener('click', ()=> irACotizacionesFiltradas(el.getAttribute('data-ir-estado')));
+  });
 
   const recent = [...quotes].sort((a,b)=> b.fechaCreacion - a.fechaCreacion).slice(0,8);
   const body = document.getElementById('panel-recent-body');
@@ -1665,7 +1815,7 @@ function updateQuoteEstado(id, estado){
   if(!q) return;
   q.estado = estado;
   save(LS.quotes, quotes);
-  renderPanel(); renderCotizaciones();
+  renderPanel(); renderCotizaciones(); renderCalendario();
   if(document.getElementById('modal-historial').classList.contains('open')) renderHistorialBody();
   enviarCotizacionASheets(q, 'guardar');
   toast('Estado actualizado');
@@ -1954,12 +2104,88 @@ function renderCotizaciones(){
 }
 document.getElementById('buscar-cotizacion').addEventListener('input', renderCotizaciones);
 document.getElementById('filtro-estado').addEventListener('change', renderCotizaciones);
+
+/* =========================================================
+   CALENDARIO
+   Solo muestra cotizaciones Confirmadas o Completadas — el mismo criterio
+   que decide si una cotización se agenda en Google Calendar (ver Code.gs).
+   Así el calendario del sistema y el de Google Calendar siempre coinciden.
+   ========================================================= */
+let calendarioMesActual = new Date();
+function formatoFechaISO(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function formatoHora12(hhmm){
+  if(!hhmm) return '';
+  const [h, m] = hhmm.split(':').map(Number);
+  const periodo = h < 12 ? 'a.m.' : 'p.m.';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m||0).padStart(2,'0')} ${periodo}`;
+}
+function renderCalendario(){
+  const year = calendarioMesActual.getFullYear();
+  const month = calendarioMesActual.getMonth();
+  const nombreMes = calendarioMesActual.toLocaleDateString('es-DO', {month:'long', year:'numeric'});
+  document.getElementById('calendario-mes-label').textContent = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+
+  const primerDiaMes = new Date(year, month, 1);
+  const ultimoDiaMes = new Date(year, month + 1, 0);
+  const inicioGrid = new Date(primerDiaMes); inicioGrid.setDate(inicioGrid.getDate() - inicioGrid.getDay());
+  const finGrid = new Date(ultimoDiaMes); finGrid.setDate(finGrid.getDate() + (6 - finGrid.getDay()));
+
+  // Solo Confirmada/Completada tienen fecha agendada de verdad — Pendiente
+  // y Declinado no comprometen todavía la fecha, así que no se muestran.
+  const porFecha = {};
+  quotes.filter(q => (q.estado === 'Confirmada' || q.estado === 'Completada') && q.fechaEvento)
+    .forEach(q => { (porFecha[q.fechaEvento] = porFecha[q.fechaEvento] || []).push(q); });
+
+  const hoyStr = formatoFechaISO(new Date());
+  const diasSemana = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+  const maxVisible = 3;
+
+  let celdas = diasSemana.map(d => `<div class="calendario-diasem">${d}</div>`).join('');
+  const cursor = new Date(inicioGrid);
+  while(cursor <= finGrid){
+    const fechaISO = formatoFechaISO(cursor);
+    const enMes = cursor.getMonth() === month;
+    const eventosDia = (porFecha[fechaISO] || []).sort((a,b)=> (a.horaEvento||'').localeCompare(b.horaEvento||''));
+    const eventosHtml = eventosDia.slice(0, maxVisible).map(q => `
+      <div class="calendario-evento ${q.estado}" data-action="ver-calendario" data-id="${q.id}" title="${escapeHtml(q.clienteNombre||'')}${q.horaEvento ? ' · '+formatoHora12(q.horaEvento) : ''}">${q.horaEvento ? formatoHora12(q.horaEvento)+' · ' : ''}${escapeHtml(q.clienteNombre||q.nombreShow||'Evento')}</div>
+    `).join('');
+    const masHtml = eventosDia.length > maxVisible ? `<div class="calendario-mas">+${eventosDia.length - maxVisible} más</div>` : '';
+    celdas += `
+      <div class="calendario-dia${enMes ? '' : ' fuera-de-mes'}${fechaISO === hoyStr ? ' hoy' : ''}">
+        <div class="calendario-dia-num">${cursor.getDate()}</div>
+        ${eventosHtml}${masHtml}
+      </div>
+    `;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  document.getElementById('calendario-grid').innerHTML = celdas;
+  document.querySelectorAll('#calendario-grid [data-action="ver-calendario"]').forEach(el=>{
+    el.addEventListener('click', ()=> openVerModal(el.getAttribute('data-id')));
+  });
+}
+document.getElementById('btn-cal-prev').addEventListener('click', ()=>{
+  calendarioMesActual = new Date(calendarioMesActual.getFullYear(), calendarioMesActual.getMonth() - 1, 1);
+  renderCalendario();
+});
+document.getElementById('btn-cal-next').addEventListener('click', ()=>{
+  calendarioMesActual = new Date(calendarioMesActual.getFullYear(), calendarioMesActual.getMonth() + 1, 1);
+  renderCalendario();
+});
+document.getElementById('btn-cal-hoy').addEventListener('click', ()=>{
+  calendarioMesActual = new Date();
+  renderCalendario();
+});
+
 function eliminarCotizacion(id){
   if(!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.')) return;
   const cotizacionEliminada = quotes.find(q=>q.id===id);
   quotes = quotes.filter(q=>q.id!==id);
   save(LS.quotes, quotes);
-  renderCotizaciones(); renderPanel();
+  renderCotizaciones(); renderPanel(); renderCalendario();
   if(cotizacionEliminada) enviarCotizacionASheets(cotizacionEliminada, 'eliminar');
   toast('Cotización eliminada');
 }
@@ -2155,6 +2381,7 @@ function resetQuoteForm(){
   });
   document.getElementById('q-fecha-evento').value = '';
   document.getElementById('q-hora-evento').value = '';
+  document.getElementById('q-hora-fin').value = '';
   document.getElementById('q-lugar-evento').value = '';
   document.getElementById('q-tipo-actividad').value = '';
   document.getElementById('q-nombre-show').value = '';
@@ -2208,6 +2435,7 @@ function loadQuoteDataIntoForm(q){
   document.getElementById('q-cliente-lugar').value = q.clienteLugar||'';
   document.getElementById('q-fecha-evento').value = q.fechaEvento||'';
   document.getElementById('q-hora-evento').value = q.horaEvento||'';
+  document.getElementById('q-hora-fin').value = q.horaFin||'';
   document.getElementById('q-lugar-evento').value = q.lugarEvento||'';
   document.getElementById('q-tipo-actividad').value = q.tipoActividad||'';
   document.getElementById('q-nombre-show').value = q.nombreShow||'';
@@ -2311,6 +2539,7 @@ document.getElementById('btn-guardar-cotizacion').addEventListener('click', ()=>
       fechaEvento,
       lugarEvento: document.getElementById('q-lugar-evento').value.trim(),
       horaEvento: document.getElementById('q-hora-evento').value,
+      horaFin: document.getElementById('q-hora-fin').value,
       tipoActividad: document.getElementById('q-tipo-actividad').value.trim(),
       nombreShow: document.getElementById('q-nombre-show').value.trim(),
       tipoContrato: document.getElementById('q-tipo-contrato').value,
@@ -2340,6 +2569,7 @@ document.getElementById('btn-guardar-cotizacion').addEventListener('click', ()=>
       fechaEvento,
       lugarEvento: document.getElementById('q-lugar-evento').value.trim(),
       horaEvento: document.getElementById('q-hora-evento').value,
+      horaFin: document.getElementById('q-hora-fin').value,
       tipoActividad: document.getElementById('q-tipo-actividad').value.trim(),
       nombreShow: document.getElementById('q-nombre-show').value.trim(),
       tipoContrato: document.getElementById('q-tipo-contrato').value,
@@ -2455,7 +2685,7 @@ function buildDocHTML(q, esFactura){
 
       <div class="q-side-block">
         <h5>Evento</h5>
-        <p>${q.fechaEvento||'-'}${q.horaEvento ? ' · ' + q.horaEvento : ''}</p>
+        <p>${q.fechaEvento||'-'}${q.horaEvento ? ' · ' + formatoHora12(q.horaEvento) + (q.horaFin ? ' – ' + formatoHora12(q.horaFin) : '') : ''}</p>
         ${q.tipoActividad ? `<p>${escapeHtml(q.tipoActividad)}</p>` : ''}
         ${q.lugarEvento ? `<p>📍 ${escapeHtml(q.lugarEvento)}</p>` : (q.clienteLugar ? `<p>${escapeHtml(q.clienteLugar)}</p>` : '')}
       </div>
@@ -3250,6 +3480,7 @@ function cotizacionDesdeFilaRemota(r){
     clienteLugar: r.clienteLugar||'',
     fechaEvento: r.fechaEvento||'',
     horaEvento: r.horaEvento||'',
+    horaFin: r.horaFin||'',
     lugarEvento: r.lugarEvento||'',
     tipoActividad: r.tipoActividad||'',
     nombreShow: r.nombreShow||'',
@@ -3327,6 +3558,7 @@ async function sincronizarCotizacionesDesdeSheets(manual){
       save(LS.quotes, quotes);
       renderCotizaciones();
       renderPanel();
+      renderCalendario();
     }
     actualizarEstadoSheetsUI('🟢 Sincronizado con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
     if(manual) toast('Cotizaciones sincronizadas con Google Sheets');
@@ -3528,6 +3760,7 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     refreshClienteSelect();
     refreshProductoSelects();
     renderPanel();
+    renderCalendario();
 
     const resumen = `${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) — igual que en la hoja ahora mismo.`;
     actualizarEstadoSheetsUI('🟢 Al día con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
@@ -3947,7 +4180,7 @@ function escapeHtml(str){
       x: Math.random() * w, y: h + 8,
       vx: (Math.random() - 0.5) * 0.5, vy: -(0.5 + Math.random() * 1.1),
       r: 1.3 + Math.random() * 2.6, vida: 1,
-      hue: 8 + Math.random() * 32,
+      hue: (350 + Math.random() * 40) % 360,
     });
   }
   function crearHumo(){
@@ -3961,7 +4194,7 @@ function escapeHtml(str){
     const cx = w * 0.15 + Math.random() * w * 0.7;
     const cy = h * 0.12 + Math.random() * h * 0.32;
     const n = 30 + Math.floor(Math.random() * 18);
-    const huePrincipal = Math.random() < 0.5 ? 350 + Math.random() * 20 : 28 + Math.random() * 30;
+    const huePrincipal = (340 + Math.random() * 40) % 360;
     const particulas = [];
     for(let i = 0; i < n; i++){
       const ang = (i / n) * Math.PI * 2 + Math.random() * 0.25;
@@ -3983,9 +4216,9 @@ function escapeHtml(str){
       const osc = Math.sin(t * 0.0028 + a.fase) * 6 + Math.sin(t * 0.006 + a.fase) * 3;
       const alto = 130 + osc;
       const grad = ctx.createRadialGradient(x, yBase, 0, x, yBase - alto * 0.5, alto);
-      grad.addColorStop(0, 'rgba(255,210,120,.55)');
-      grad.addColorStop(0.35, 'rgba(255,120,40,.35)');
-      grad.addColorStop(1, 'rgba(255,60,20,0)');
+      grad.addColorStop(0, 'rgba(244,182,182,.55)');
+      grad.addColorStop(0.35, 'rgba(214,40,40,.35)');
+      grad.addColorStop(1, 'rgba(158,27,27,0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.ellipse(x, yBase - alto * 0.4, alto * 0.55, alto, 0, 0, Math.PI * 2);
