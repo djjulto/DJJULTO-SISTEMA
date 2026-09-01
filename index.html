@@ -1141,6 +1141,12 @@
           </p>
           <button class="btn secondary" id="btn-enviar-todo-sheets">Enviar datos existentes a Google Sheets</button>
         </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--borde)">
+          <p class="sub" style="margin:0 0 10px">
+            ¿Quieres que este navegador quede exactamente igual a lo que hay en la hoja (por ejemplo, si aquí quedó algo de prueba o duplicado)? Este botón <strong>reemplaza todos los clientes, productos, paquetes de show y cotizaciones guardados en este navegador</strong> por lo que traiga la hoja de Google Sheets en ese momento. No borra nada de la hoja en sí — solo lo que hay aquí. Si no logra conectarse, no borra nada.
+          </p>
+          <button class="btn danger" id="btn-vaciar-y-recargar">Vaciar este navegador y recargar todo desde Sheets</button>
+        </div>
         <p class="sub" style="margin:14px 0 0">
           ¿No tienes el script todavía? Pídele a Claude el archivo <code>Code.gs</code> con el código listo para copiar en tu hoja de Google Sheets (Extensiones → Apps Script), junto con los pasos para publicarlo como aplicación web y obtener esta URL.
         </p>
@@ -3251,6 +3257,87 @@ async function enviarTodoASheets(){
   toast(resumen);
 }
 document.getElementById('btn-enviar-todo-sheets').addEventListener('click', enviarTodoASheets);
+
+/* Reemplaza TODO lo que hay guardado en este navegador (clientes,
+   productos, paquetes de show y cotizaciones) por exactamente lo que haya
+   en este momento en la hoja de Google Sheets — para dejar este navegador
+   como un espejo exacto de la hoja (por ejemplo, si quedó algo de prueba
+   local que nunca estuvo allá). No toca ni borra nada en la hoja misma.
+
+   Primero se descargan las cuatro listas; solo si las CUATRO llegan bien
+   se reemplaza lo local — así, si la conexión falla a medias, nunca se
+   borra nada de este navegador. */
+async function vaciarYRecargarDesdeSheets(){
+  const url = (document.getElementById('s-sheets-url').value || '').trim() || settings.sheetsUrl;
+  if(!url){ toast('Configura y guarda primero la URL de la aplicación web'); return; }
+  settings.sheetsUrl = url;
+  settings.sheetsEnabled = true;
+  save(LS.settings, settings);
+
+  if(!confirm('Esto va a REEMPLAZAR todos los clientes, productos, paquetes de show y cotizaciones guardados en este navegador por lo que haya en este momento en la hoja de Google Sheets. La hoja en sí NO se toca. Si no se puede conectar, no se borra nada aquí. ¿Continuar?')) return;
+
+  const btn = document.getElementById('btn-vaciar-y-recargar');
+  btn.disabled = true;
+  actualizarEstadoSheetsUI('Descargando todo desde Google Sheets…');
+
+  try{
+    const [datosClientes, datosProductos, datosPaquetes, datosCotizaciones] = await Promise.all([
+      sheetsGetJSONP('clientes'),
+      sheetsGetJSONP('productos'),
+      sheetsGetJSONP('paquetes'),
+      sheetsGetJSONP('cotizaciones'),
+    ]);
+    if(!datosClientes || !Array.isArray(datosClientes.clientes)) throw new Error('Respuesta inesperada al traer clientes');
+    if(!datosProductos || !Array.isArray(datosProductos.productos)) throw new Error('Respuesta inesperada al traer productos');
+    if(!datosPaquetes || !Array.isArray(datosPaquetes.paquetes)) throw new Error('Respuesta inesperada al traer paquetes');
+    if(!datosCotizaciones || !Array.isArray(datosCotizaciones.cotizaciones)) throw new Error('Respuesta inesperada al traer cotizaciones');
+
+    // Las cuatro descargas salieron bien: recién ahora se reemplaza lo local.
+    clients = datosClientes.clientes.map(r => ({
+      id: String(r.id||'').trim() || uid(),
+      nombre: r.nombre||'', telefono: r.telefono||'', rnc: r.rnc||'',
+      tipoActividad: r.tipoActividad||'', lugar: r.lugar||'', _deSheets:true,
+    })).filter(c => c.nombre);
+
+    products = datosProductos.productos.map(r => ({
+      id: String(r.id||'').trim() || uid(),
+      nombre: r.nombre||'', categoria: r.categoria||'', precio: Number(r.precio)||0, _deSheets:true,
+    })).filter(p => p.nombre);
+
+    showPackages = datosPaquetes.paquetes
+      .map(paqueteDesdeFilaRemota)
+      .filter(p => p.key)
+      .map(p => Object.assign({}, p, {_deSheets:true}));
+
+    quotes = datosCotizaciones.cotizaciones
+      .map(cotizacionDesdeFilaRemota)
+      .filter(q => q.id)
+      .map(q => Object.assign({}, q, {_deSheets:true}));
+
+    save(LS.clients, clients);
+    save(LS.products, products);
+    save(LS.showPackages, showPackages);
+    save(LS.quotes, quotes);
+    renderClientes();
+    renderProductos();
+    renderPaquetesEditor();
+    renderCotizaciones();
+    refreshClienteSelect();
+    refreshProductoSelects();
+    renderPanel();
+
+    const resumen = `Listo: ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) cargados desde la hoja.`;
+    actualizarEstadoSheetsUI('🟢 ' + resumen, 'ok');
+    toast(resumen);
+  }catch(err){
+    console.error('Error recargando todo desde Google Sheets:', err);
+    actualizarEstadoSheetsUI('⚠️ No se pudo recargar desde Google Sheets — no se borró nada local. Revisa tu conexión.', 'error');
+    toast('No se pudo conectar con Google Sheets — no se borró nada');
+  }finally{
+    btn.disabled = false;
+  }
+}
+document.getElementById('btn-vaciar-y-recargar').addEventListener('click', vaciarYRecargarDesdeSheets);
 
 function renderUsuarios(){
   const body = document.getElementById('usuarios-body');
