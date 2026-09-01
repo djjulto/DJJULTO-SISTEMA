@@ -2574,14 +2574,24 @@ function renderAjustes(){
    (autocompleta nombre y precio) o dejar en "Manual" y escribirlo a mano. */
 function pkgItemRowHTML(it){
   it = it || {productoId:'', descripcion:'', cantidad:1, precio:0, detalle:''};
+  // Los paquetes guardados antes de que existiera este selector no traen
+  // productoId (solo descripcion) — si su descripción coincide con el
+  // nombre de un artículo del catálogo, se resuelve aquí solo para
+  // mostrarlo ya seleccionado (no se sobreescribe nada hasta que se
+  // guarde de nuevo).
+  let productoId = it.productoId || '';
+  if(!productoId && it.descripcion){
+    const coincide = products.find(p=>p.nombre === it.descripcion);
+    if(coincide) productoId = coincide.id;
+  }
   return `
     <td>
       <select class="pkg-item-producto-select">
-        <option value="">-- Manual --</option>
-        ${products.map(p=>`<option value="${p.id}" ${p.id===it.productoId?'selected':''}>${escapeHtml(p.nombre)}</option>`).join('')}
+        <option value="" ${!productoId ? 'selected' : ''} disabled>-- Selecciona un artículo --</option>
+        ${products.map(p=>`<option value="${p.id}" ${p.id===productoId?'selected':''}>${escapeHtml(p.nombre)}</option>`).join('')}
       </select>
-      <input type="text" class="pkg-item-desc" placeholder="Descripción manual" style="margin-top:5px" value="${escapeHtml(it.descripcion||'')}">
-      <input type="text" class="pkg-item-detalle" placeholder="Qué incluye (lo verá el cliente en THE SHOW)" style="margin-top:5px" value="${escapeHtml(it.detalle||'')}">
+      <input type="hidden" class="pkg-item-desc" value="${escapeHtml(it.descripcion||'')}">
+      <input type="hidden" class="pkg-item-detalle" value="${escapeHtml(it.detalle||'')}">
     </td>
     <td class="num-col"><input type="number" class="pkg-item-cant" min="0" step="1" value="${it.cantidad}"></td>
     <td class="price-col"><input type="number" class="pkg-item-precio" min="0" step="0.01" value="${it.precio}"></td>
@@ -2591,10 +2601,18 @@ function pkgItemRowHTML(it){
 function wirePkgItemRow(tr){
   const prodSel = tr.querySelector('.pkg-item-producto-select');
   const descInput = tr.querySelector('.pkg-item-desc');
+  const detalleInput = tr.querySelector('.pkg-item-detalle');
   const precioInput = tr.querySelector('.pkg-item-precio');
   prodSel.addEventListener('change', ()=>{
     const p = products.find(x=>x.id===prodSel.value);
-    if(p){ descInput.value = p.nombre; precioInput.value = p.precio; }
+    if(p){
+      descInput.value = p.nombre;
+      precioInput.value = p.precio;
+      // Si el catálogo de servicios de THE SHOW tiene una descripción
+      // predefinida para este artículo, se usa — si no, se deja la que
+      // ya tuviera (por si se había personalizado antes).
+      detalleInput.value = DETALLES_PRODUCTOS_SHOW[p.nombre] || detalleInput.value || '';
+    }
   });
   tr.querySelector('[data-action="del-pkg-item"]').addEventListener('click', ()=> tr.remove());
 }
@@ -2605,7 +2623,7 @@ function renderPaquetesEditor(){
     <div class="paquete-block" data-pkg="${pkg.key}">
       <h4>${escapeHtml(pkg.nombre)}</h4>
       <table class="items-table">
-        <thead><tr><th>Servicio / Descripción</th><th class="num-col">Cant.</th><th class="price-col">Precio fijo</th><th class="del-col"></th></tr></thead>
+        <thead><tr><th>Artículo</th><th class="num-col">Cant.</th><th class="price-col">Precio fijo</th><th class="del-col"></th></tr></thead>
         <tbody>
           ${pkg.items.map(it => `<tr>${pkgItemRowHTML(it)}</tr>`).join('')}
         </tbody>
@@ -2637,7 +2655,9 @@ document.getElementById('btn-guardar-paquetes').addEventListener('click', async 
       const detalle = tr.querySelector('.pkg-item-detalle').value.trim();
       const cantidad = parseFloat(tr.querySelector('.pkg-item-cant').value)||0;
       const precio = parseFloat(tr.querySelector('.pkg-item-precio').value)||0;
-      if(!descripcion && cantidad===0 && precio===0) return;
+      // Ya no se admite un renglón "manual" sin artículo: si no se
+      // seleccionó ninguno, ese renglón se descarta al guardar.
+      if(!productoId) return;
       items.push({productoId, descripcion, cantidad, precio, detalle});
     });
     nuevos.push({key, nombre: original ? original.nombre : key, items});
