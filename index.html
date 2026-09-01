@@ -1118,7 +1118,7 @@
       <div class="section-card">
         <h3>Sincronización con Google Sheets y Google Calendar</h3>
         <p class="sub" style="margin:-6px 0 16px">
-          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes, tu catálogo de productos y tus cotizaciones — y para que varias computadoras compartan la misma información. Los <strong>clientes</strong>, los <strong>productos</strong> (catálogo de servicios con precios) y las <strong>cotizaciones</strong> se sincronizan en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja (revisando cada 20 segundos), y lo que cambie en otra computadora que tenga el sistema conectado a esta misma hoja aparece aquí también. Si dos computadoras editan la misma cotización casi al mismo tiempo, gana la que se guardó de último. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
+          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes, tu catálogo de productos, tus paquetes de show y tus cotizaciones — y para que varias computadoras compartan la misma información. Los <strong>clientes</strong>, los <strong>productos</strong> (catálogo de servicios con precios), los <strong>paquetes de show</strong> (Básico/VIP/The Show) y las <strong>cotizaciones</strong> se sincronizan en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja (revisando cada 20 segundos), y lo que cambie en otra computadora que tenga el sistema conectado a esta misma hoja aparece aquí también. Si dos computadoras editan lo mismo casi al mismo tiempo, gana lo que se guardó de último. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
         </p>
         <div class="form-grid">
           <div class="field" style="grid-column:1/-1">
@@ -2619,7 +2619,7 @@ function renderPaquetesEditor(){
     });
   });
 }
-document.getElementById('btn-guardar-paquetes').addEventListener('click', ()=>{
+document.getElementById('btn-guardar-paquetes').addEventListener('click', async ()=>{
   const nuevos = [];
   document.querySelectorAll('#paquetes-editor .paquete-block').forEach(block=>{
     const key = block.getAttribute('data-pkg');
@@ -2639,6 +2639,12 @@ document.getElementById('btn-guardar-paquetes').addEventListener('click', ()=>{
   showPackages = nuevos;
   save(LS.showPackages, showPackages);
   toast('Paquetes de show guardados');
+  // Se envían de uno en uno (no en paralelo): el envío por <form>+iframe
+  // oculto comparte un solo iframe, así que mandar varios a la vez
+  // pisaría las respuestas entre sí (igual que en enviarTodoASheets).
+  for(const pkg of nuevos){
+    await enviarPaqueteASheets(pkg, 'guardar');
+  }
 });
 document.getElementById('btn-guardar-ajustes').addEventListener('click', ()=>{
   settings.nombreComercial = document.getElementById('s-nombre-comercial').value.trim();
@@ -2666,6 +2672,9 @@ document.getElementById('btn-guardar-ajustes').addEventListener('click', ()=>{
        20 segundos para traer cambios hechos directamente en la hoja).
      - Productos: igual que clientes, pero contra la hoja "Productos"
        (catálogo de servicios con precio). También bidireccional.
+     - Paquetes de show: igual que clientes, pero contra la hoja "Paquetes
+       de Show" (Básico/VIP/The Show, identificados por "key" en vez de
+       "id", con sus servicios en itemsJSON). También bidireccional.
      - Cotizaciones: igual que clientes, pero contra la hoja
        "Cotizaciones", con resolución de conflictos por fecha de última
        actualización (gana el cambio más reciente). También bidireccional.
@@ -2805,6 +2814,20 @@ async function enviarProductoASheets(producto, accion){
     await sheetsPostViaForm({ entidad: 'producto', accion: accion, datos: producto });
   }catch(err){
     console.error('No se pudo enviar el producto a Google Sheets:', err);
+    actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
+  }
+}
+
+/* Envía un paquete de show (Básico/VIP/The Show, con su lista de
+   servicios) a la hoja "Paquetes de Show". Se identifica por "key" en vez
+   de "id" (son un conjunto fijo de 3), y sus servicios viajan como JSON en
+   la columna itemsJSON, igual que las cotizaciones. */
+async function enviarPaqueteASheets(paquete, accion){
+  if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
+  try{
+    await sheetsPostViaForm({ entidad: 'paquete', accion: accion, datos: paquete });
+  }catch(err){
+    console.error('No se pudo enviar el paquete de show a Google Sheets:', err);
     actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
   }
 }
@@ -2949,6 +2972,68 @@ async function sincronizarProductosDesdeSheets(manual){
   }
 }
 
+/* Reconstruye un paquete de show a partir de una fila de la hoja (los
+   servicios llegan como texto JSON en itemsJSON, igual que en las
+   cotizaciones). */
+function paqueteDesdeFilaRemota(r){
+  let items = [];
+  try{ items = JSON.parse(r.itemsJSON || '[]'); }catch(e){ items = []; }
+  return {
+    key: String(r.key||'').trim(),
+    nombre: r.nombre || '',
+    items: Array.isArray(items) ? items : [],
+  };
+}
+
+/* Trae los paquetes de show (Básico/VIP/The Show) desde la hoja "Paquetes
+   de Show" y los mezcla con los locales por "key" — mismo mecanismo que
+   sincronizarClientesDesdeSheets/sincronizarProductosDesdeSheets. */
+let sheetsPaquetesSincronizando = false;
+async function sincronizarPaquetesDesdeSheets(manual){
+  if(!settings.sheetsUrl){
+    if(manual) toast('Configura primero la URL de la aplicación web');
+    return;
+  }
+  if(sheetsPaquetesSincronizando) return;
+  sheetsPaquetesSincronizando = true;
+  try{
+    const datos = await sheetsGetJSONP('paquetes');
+    if(!datos || !Array.isArray(datos.paquetes)){
+      throw new Error('Respuesta inesperada de la hoja');
+    }
+    const remotos = datos.paquetes.map(paqueteDesdeFilaRemota).filter(p => p.key);
+    const clavesRemotas = new Set(remotos.map(p=>p.key));
+    let cambios = false;
+
+    remotos.forEach(rp=>{
+      const local = showPackages.find(p=>p.key===rp.key);
+      if(!local){
+        showPackages.push(Object.assign({}, rp, {_deSheets:true}));
+        cambios = true;
+      } else {
+        const cambioCampos = (local.nombre||'') !== (rp.nombre||'') || JSON.stringify(local.items||[]) !== JSON.stringify(rp.items||[]);
+        if(cambioCampos){ local.nombre = rp.nombre; local.items = rp.items; cambios = true; }
+        local._deSheets = true;
+      }
+    });
+    const antes = showPackages.length;
+    showPackages = showPackages.filter(p => clavesRemotas.has(p.key) || !p._deSheets);
+    if(showPackages.length !== antes) cambios = true;
+
+    if(cambios){
+      save(LS.showPackages, showPackages);
+      renderPaquetesEditor();
+    }
+    actualizarEstadoSheetsUI('🟢 Sincronizado con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
+    if(manual) toast('Paquetes de show sincronizados con Google Sheets');
+  }catch(err){
+    console.error('Error sincronizando paquetes de show con Google Sheets:', err);
+    if(manual) toast('No se pudo conectar con Google Sheets');
+  }finally{
+    sheetsPaquetesSincronizando = false;
+  }
+}
+
 /* Reconstruye una cotización completa a partir de una fila de la hoja
    (todo llega como texto/booleano plano de Sheets, así que aquí se
    convierten los números, booleanos y el JSON de servicios de vuelta a
@@ -3070,10 +3155,12 @@ function iniciarPollingSheets(){
     // primeros 20 segundos.
     sincronizarClientesDesdeSheets(false);
     sincronizarProductosDesdeSheets(false);
+    sincronizarPaquetesDesdeSheets(false);
     sincronizarCotizacionesDesdeSheets(false);
     sheetsPollTimer = setInterval(()=>{
       sincronizarClientesDesdeSheets(false);
       sincronizarProductosDesdeSheets(false);
+      sincronizarPaquetesDesdeSheets(false);
       sincronizarCotizacionesDesdeSheets(false);
     }, 20000);
   }
@@ -3109,25 +3196,27 @@ document.getElementById('btn-probar-sheets').addEventListener('click', async ()=
 document.getElementById('btn-sync-ahora').addEventListener('click', ()=>{
   sincronizarClientesDesdeSheets(true);
   sincronizarProductosDesdeSheets(true);
+  sincronizarPaquetesDesdeSheets(true);
   sincronizarCotizacionesDesdeSheets(true);
 });
 
 /* Envío único de todo lo que ya existía en el sistema antes de conectar
-   Google Sheets (clientes, productos y cotizaciones). Se envía de uno en
-   uno (no en paralelo) porque el envío por <form>+iframe oculto comparte
-   un solo iframe — mandar varios a la vez pisaría las respuestas entre sí. */
+   Google Sheets (clientes, productos, paquetes de show y cotizaciones). Se
+   envía de uno en uno (no en paralelo) porque el envío por <form>+iframe
+   oculto comparte un solo iframe — mandar varios a la vez pisaría las
+   respuestas entre sí. */
 async function enviarTodoASheets(){
   const url = document.getElementById('s-sheets-url').value.trim();
   if(!url){ toast('Escribe primero la URL de la aplicación web'); return; }
   settings.sheetsUrl = url;
 
   const btn = document.getElementById('btn-enviar-todo-sheets');
-  const total = clients.length + products.length + quotes.length;
-  if(total === 0){ toast('No hay clientes, productos ni cotizaciones que enviar'); return; }
-  if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s) y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
+  const total = clients.length + products.length + showPackages.length + quotes.length;
+  if(total === 0){ toast('No hay clientes, productos, paquetes ni cotizaciones que enviar'); return; }
+  if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
 
   btn.disabled = true;
-  let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okCotizaciones = 0, falloCotizaciones = 0;
+  let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okPaquetes = 0, falloPaquetes = 0, okCotizaciones = 0, falloCotizaciones = 0;
 
   for(const c of clients){
     hecho++;
@@ -3141,6 +3230,12 @@ async function enviarTodoASheets(){
     try{ await sheetsPostViaForm({ entidad:'producto', accion:'guardar', datos:p }); okProductos++; }
     catch(err){ falloProductos++; console.error('Error enviando producto existente:', p.nombre, err); }
   }
+  for(const pkg of showPackages){
+    hecho++;
+    actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
+    try{ await sheetsPostViaForm({ entidad:'paquete', accion:'guardar', datos:pkg }); okPaquetes++; }
+    catch(err){ falloPaquetes++; console.error('Error enviando paquete de show existente:', pkg.nombre, err); }
+  }
   for(const q of quotes){
     hecho++;
     actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
@@ -3149,9 +3244,9 @@ async function enviarTodoASheets(){
   }
 
   btn.disabled = false;
-  const hayFallos = falloClientes || falloProductos || falloCotizaciones;
-  const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s) y ${okCotizaciones} cotización(es).` +
-    (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
+  const hayFallos = falloClientes || falloProductos || falloPaquetes || falloCotizaciones;
+  const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s), ${okPaquetes} paquete(s) de show y ${okCotizaciones} cotización(es).` +
+    (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s), ${falloPaquetes} paquete(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
   actualizarEstadoSheetsUI((hayFallos ? '⚠️ ' : '🟢 ') + resumen, hayFallos ? 'error' : 'ok');
   toast(resumen);
 }
