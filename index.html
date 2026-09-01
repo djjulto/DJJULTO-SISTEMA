@@ -204,6 +204,33 @@
   .badge.Completada{background:var(--menta-suave);color:#2F7D57}
   .badge.Declinado{background:var(--terracota-suave);color:var(--rojo-osc)}
 
+  /* ---------- Secciones de cotizaciones agrupadas por estado ---------- */
+  .cotiz-grupo{
+    margin-bottom:22px;border-radius:var(--radio-lg);overflow:hidden;
+    box-shadow:var(--sombra);border:1px solid var(--borde);background:#fff;
+  }
+  .cotiz-grupo:last-child{margin-bottom:0}
+  .cotiz-grupo-header{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 20px;font-weight:700;font-size:14.5px;
+  }
+  .cotiz-grupo-header .cnt{
+    background:rgba(255,255,255,.6);border-radius:20px;padding:2px 11px;font-size:12.5px;font-weight:700;
+  }
+  .cotiz-grupo-header.Pendiente{background:var(--durazno-suave);color:#9A6A2E;border-left:5px solid var(--amarillo)}
+  .cotiz-grupo-header.Confirmada{background:var(--azul-suave);color:#2C5C86;border-left:5px solid var(--azul)}
+  .cotiz-grupo-header.Completada{background:var(--menta-suave);color:#2F7D57;border-left:5px solid var(--verde)}
+  .cotiz-grupo-header.Declinado{background:var(--terracota-suave);color:var(--rojo-osc);border-left:5px solid var(--rojoestado)}
+  .cotiz-grupo .table-wrap{border-radius:0;box-shadow:none;border:none;border-top:1px solid var(--borde)}
+  tbody tr.fila-Pendiente{background:#FFFCF6}
+  tbody tr.fila-Pendiente:hover{background:#FFF6E8}
+  tbody tr.fila-Confirmada{background:#F7FBFE}
+  tbody tr.fila-Confirmada:hover{background:#EDF6FD}
+  tbody tr.fila-Completada{background:#F6FCF8}
+  tbody tr.fila-Completada:hover{background:#EAF8EF}
+  tbody tr.fila-Declinado{background:#FDF7F7}
+  tbody tr.fila-Declinado:hover{background:#FBEDED}
+
   .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
   .toolbar input[type=text], .toolbar select{
     padding:9.5px 13px;border-radius:var(--radio-sm);border:1px solid var(--borde);font-size:13.5px;background:#fff;
@@ -944,12 +971,7 @@
           <option value="Declinado">Declinado</option>
         </select>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Show/Paquete</th><th>Total</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="cotizaciones-body"></tbody>
-        </table>
-      </div>
+      <div id="cotizaciones-grupos"></div>
     </section>
 
     <!-- NUEVA COTIZACION -->
@@ -1610,7 +1632,7 @@ function renderPanel(){
 }
 
 function rowQuoteHTML(q){
-  return `<tr data-id="${q.id}">
+  return `<tr class="fila-${q.estado}" data-id="${q.id}">
     <td>#${pad5(q.numero)}</td>
     <td>${escapeHtml(q.clienteNombre||'')}</td>
     <td>${q.fechaEvento||'-'}</td>
@@ -1746,7 +1768,7 @@ function renderHistorialBody(){
   const list = quotes.filter(q=>q.clienteId===historialClienteId).sort((a,b)=>b.fechaCreacion-a.fechaCreacion);
   const body = document.getElementById('historial-body');
   body.innerHTML = list.length ? list.map(q=>`
-    <tr data-id="${q.id}">
+    <tr class="fila-${q.estado}" data-id="${q.id}">
       <td>#${pad5(q.numero)}</td>
       <td>${q.fechaEvento||'-'}</td>
       <td>${escapeHtml(q.nombreShow||'-')}</td>
@@ -1858,16 +1880,19 @@ document.getElementById('btn-export-csv').addEventListener('click', ()=>{
 /* =========================================================
    COTIZACIONES (listado)
    ========================================================= */
-function renderCotizaciones(){
-  const term = (document.getElementById('buscar-cotizacion').value||'').toLowerCase();
-  const estadoF = document.getElementById('filtro-estado').value;
-  let list = [...quotes].sort((a,b)=> b.fechaCreacion - a.fechaCreacion);
-  if(term) list = list.filter(q => (q.clienteNombre||'').toLowerCase().includes(term) || pad5(q.numero).includes(term));
-  if(estadoF) list = list.filter(q => q.estado === estadoF);
-
-  const body = document.getElementById('cotizaciones-body');
-  body.innerHTML = list.length ? list.map(q=>`
-    <tr data-id="${q.id}">
+/* Cada cotización se muestra dentro de la sección de su estado (Pendientes,
+   Confirmadas, Completadas, Declinadas), así que al cambiar el estado la
+   cotización "se mueve sola" a la sección correspondiente en el próximo
+   render. El orden refleja el flujo normal del negocio. */
+const GRUPOS_COTIZACION = [
+  {estado:'Pendiente', label:'Pendientes', icon:'⏳'},
+  {estado:'Confirmada', label:'Confirmadas por el cliente', icon:'✅'},
+  {estado:'Completada', label:'Completadas', icon:'🏁'},
+  {estado:'Declinado', label:'Declinadas', icon:'✖️'},
+];
+function filaCotizacionHTML(q){
+  return `
+    <tr class="fila-${q.estado}" data-id="${q.id}">
       <td>#${pad5(q.numero)}</td>
       <td>${escapeHtml(q.clienteNombre||'')}</td>
       <td>${q.fechaEvento||'-'}</td>
@@ -1888,12 +1913,44 @@ function renderCotizaciones(){
         <button class="btn danger small" data-action="eliminar" data-id="${q.id}">Eliminar</button>
       </td>
     </tr>
-  `).join('') : `<tr class="empty-row"><td colspan="7">No se encontraron cotizaciones.</td></tr>`;
+  `;
+}
+function renderCotizaciones(){
+  const term = (document.getElementById('buscar-cotizacion').value||'').toLowerCase();
+  const estadoF = document.getElementById('filtro-estado').value;
+  let list = [...quotes].sort((a,b)=> b.fechaCreacion - a.fechaCreacion);
+  if(term) list = list.filter(q => (q.clienteNombre||'').toLowerCase().includes(term) || pad5(q.numero).includes(term));
 
-  attachQuoteRowEvents(body);
-  body.querySelectorAll('[data-action="editar"]').forEach(b=> b.addEventListener('click', ()=> openEditQuote(b.getAttribute('data-id'))));
-  body.querySelectorAll('[data-action="duplicar"]').forEach(b=> b.addEventListener('click', ()=> duplicarCotizacion(b.getAttribute('data-id'))));
-  body.querySelectorAll('[data-action="eliminar"]').forEach(b=> b.addEventListener('click', ()=> eliminarCotizacion(b.getAttribute('data-id'))));
+  const cont = document.getElementById('cotizaciones-grupos');
+  const grupos = GRUPOS_COTIZACION
+    .filter(g => !estadoF || estadoF === g.estado)
+    .map(g => Object.assign({}, g, {items: list.filter(q => q.estado === g.estado)}))
+    .filter(g => g.items.length);
+
+  if(!grupos.length){
+    cont.innerHTML = `<div class="table-wrap"><div class="empty-row" style="padding:24px;text-align:center;color:var(--gris)">No se encontraron cotizaciones.</div></div>`;
+    return;
+  }
+
+  cont.innerHTML = grupos.map(g => `
+    <div class="cotiz-grupo">
+      <div class="cotiz-grupo-header ${g.estado}">
+        <span>${g.icon} ${g.label}</span>
+        <span class="cnt">${g.items.length}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Show/Paquete</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+          <tbody>${g.items.map(filaCotizacionHTML).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `).join('');
+
+  attachQuoteRowEvents(cont);
+  cont.querySelectorAll('[data-action="editar"]').forEach(b=> b.addEventListener('click', ()=> openEditQuote(b.getAttribute('data-id'))));
+  cont.querySelectorAll('[data-action="duplicar"]').forEach(b=> b.addEventListener('click', ()=> duplicarCotizacion(b.getAttribute('data-id'))));
+  cont.querySelectorAll('[data-action="eliminar"]').forEach(b=> b.addEventListener('click', ()=> eliminarCotizacion(b.getAttribute('data-id'))));
 }
 document.getElementById('buscar-cotizacion').addEventListener('input', renderCotizaciones);
 document.getElementById('filtro-estado').addEventListener('change', renderCotizaciones);
