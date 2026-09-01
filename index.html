@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Le pide al navegador que nunca sirva una copia vieja/cacheada de esta
+     página: siempre que se abra (en GitHub Pages o donde sea), que revise
+     de nuevo en vez de reusar una versión guardada de antes. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>DJ JULTO THE SHOW — Sistema de Cotizaciones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1118,7 +1124,7 @@
       <div class="section-card">
         <h3>Sincronización con Google Sheets y Google Calendar</h3>
         <p class="sub" style="margin:-6px 0 16px">
-          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes, tu catálogo de productos, tus paquetes de show y tus cotizaciones — y para que varias computadoras compartan la misma información. Los <strong>clientes</strong>, los <strong>productos</strong> (catálogo de servicios con precios), los <strong>paquetes de show</strong> (Básico/VIP/The Show) y las <strong>cotizaciones</strong> se sincronizan en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja (revisando cada 20 segundos), y lo que cambie en otra computadora que tenga el sistema conectado a esta misma hoja aparece aquí también. Si dos computadoras editan lo mismo casi al mismo tiempo, gana lo que se guardó de último. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
+          Conecta este sistema a una hoja de Google Sheets para llevar control de tus clientes, tu catálogo de productos, tus paquetes de show y tus cotizaciones — y para que cualquier computadora, celular o copia de este archivo (incluyendo la publicada en GitHub Pages) muestre siempre la misma información, en vivo. Los <strong>clientes</strong>, los <strong>productos</strong> (catálogo de servicios con precios), los <strong>paquetes de show</strong> (Básico/VIP/The Show) y las <strong>cotizaciones</strong> van en ambas direcciones: lo que agregues, edites o elimines aquí se envía a la hoja de inmediato, y lo que haya en la hoja se vuelve a descargar por completo al abrir el sistema y cada 20 segundos mientras está abierto — nunca se queda mostrando una versión vieja guardada en este navegador. Si dos computadoras editan lo mismo casi al mismo tiempo, gana lo que se guardó de último en la hoja. Además, cada cotización con fecha de evento crea o actualiza automáticamente un evento en tu <strong>Google Calendar</strong> (se borra solo si declinas la cotización o la eliminas).
         </p>
         <div class="form-grid">
           <div class="field" style="grid-column:1/-1">
@@ -2826,6 +2832,7 @@ async function enviarClienteASheets(cliente, accion){
   if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
   try{
     await sheetsPostViaForm({ entidad: 'cliente', accion: accion, datos: cliente });
+    posponerProximaRecargaSheets();
   }catch(err){
     console.error('No se pudo enviar el cliente a Google Sheets:', err);
     actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
@@ -2838,6 +2845,7 @@ async function enviarProductoASheets(producto, accion){
   if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
   try{
     await sheetsPostViaForm({ entidad: 'producto', accion: accion, datos: producto });
+    posponerProximaRecargaSheets();
   }catch(err){
     console.error('No se pudo enviar el producto a Google Sheets:', err);
     actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
@@ -2852,6 +2860,7 @@ async function enviarPaqueteASheets(paquete, accion){
   if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
   try{
     await sheetsPostViaForm({ entidad: 'paquete', accion: accion, datos: paquete });
+    posponerProximaRecargaSheets();
   }catch(err){
     console.error('No se pudo enviar el paquete de show a Google Sheets:', err);
     actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
@@ -2866,6 +2875,7 @@ async function enviarCotizacionASheets(cotizacion, accion){
   if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
   try{
     await sheetsPostViaForm({ entidad: 'cotizacion', accion: accion, datos: cotizacion });
+    posponerProximaRecargaSheets();
   }catch(err){
     console.error('No se pudo enviar la cotización a Google Sheets:', err);
     actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar la última cotización con Google Sheets (revisa tu conexión o la URL).', 'error');
@@ -3174,22 +3184,35 @@ async function sincronizarCotizacionesDesdeSheets(manual){
 function iniciarPollingSheets(){
   clearInterval(sheetsPollTimer);
   if(settings.sheetsEnabled && settings.sheetsUrl){
-    // Trae lo que ya exista en la hoja de inmediato al cargar/activar —
-    // así, si este mismo archivo se abre en otra computadora (o se le
-    // manda a otra persona) con la sincronización ya configurada, ve los
-    // datos existentes al instante en vez de tener que esperar los
-    // primeros 20 segundos.
-    sincronizarClientesDesdeSheets(false);
-    sincronizarProductosDesdeSheets(false);
-    sincronizarPaquetesDesdeSheets(false);
-    sincronizarCotizacionesDesdeSheets(false);
+    // SIEMPRE se descarga todo de nuevo y se reemplaza (nunca se
+    // "mezcla" con lo que ya hubiera guardado en este navegador) — así,
+    // en cualquier dispositivo que abra este archivo (incluyendo la
+    // copia publicada en GitHub Pages), lo que se ve es exactamente lo
+    // que hay en la hoja en ese momento, nunca una versión vieja o
+    // guardada en caché de antes. Esto corre de inmediato al abrir el
+    // sistema, y de nuevo cada 20 segundos mientras está abierto.
+    descargarYReemplazarTodoDesdeSheets(true);
     sheetsPollTimer = setInterval(()=>{
-      sincronizarClientesDesdeSheets(false);
-      sincronizarProductosDesdeSheets(false);
-      sincronizarPaquetesDesdeSheets(false);
-      sincronizarCotizacionesDesdeSheets(false);
+      descargarYReemplazarTodoDesdeSheets(true);
     }, 20000);
   }
+}
+
+/* Reinicia la cuenta de los 20 segundos hacia la próxima recarga
+   automática — se llama justo después de enviar un cambio propio a la
+   hoja (crear/editar/borrar un cliente, producto, paquete o cotización),
+   para darle tiempo de sobra a que ese cambio quede reflejado en la hoja
+   ANTES de que la próxima recarga automática vuelva a descargar todo.
+   Sin esto, una recarga que cayera justo a mitad de camino podría traer
+   una versión de la hoja que todavía no tiene el cambio recién hecho, y
+   ese cambio "desaparecería" localmente por unos segundos hasta la
+   siguiente vuelta. */
+function posponerProximaRecargaSheets(){
+  if(!settings.sheetsEnabled || !settings.sheetsUrl) return;
+  clearInterval(sheetsPollTimer);
+  sheetsPollTimer = setInterval(()=>{
+    descargarYReemplazarTodoDesdeSheets(true);
+  }, 20000);
 }
 
 document.getElementById('btn-guardar-sheets').addEventListener('click', ()=>{
@@ -3220,10 +3243,7 @@ document.getElementById('btn-probar-sheets').addEventListener('click', async ()=
   }
 });
 document.getElementById('btn-sync-ahora').addEventListener('click', ()=>{
-  sincronizarClientesDesdeSheets(true);
-  sincronizarProductosDesdeSheets(true);
-  sincronizarPaquetesDesdeSheets(true);
-  sincronizarCotizacionesDesdeSheets(true);
+  descargarYReemplazarTodoDesdeSheets(false);
 });
 
 /* Envío único de todo lo que ya existía en el sistema antes de conectar
@@ -3242,6 +3262,10 @@ async function enviarTodoASheets(){
   if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
 
   btn.disabled = true;
+  // Se aparta la próxima recarga automática mientras dura este envío
+  // (puede tomar varios segundos): así la recarga periódica no reemplaza
+  // a mitad de camino lo que ya se envió por lo que todavía falta.
+  posponerProximaRecargaSheets();
   let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okPaquetes = 0, falloPaquetes = 0, okCotizaciones = 0, falloCotizaciones = 0;
 
   for(const c of clients){
@@ -3270,6 +3294,7 @@ async function enviarTodoASheets(){
   }
 
   btn.disabled = false;
+  posponerProximaRecargaSheets();
   const hayFallos = falloClientes || falloProductos || falloPaquetes || falloCotizaciones;
   const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s), ${okPaquetes} paquete(s) de show y ${okCotizaciones} cotización(es).` +
     (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s), ${falloPaquetes} paquete(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
@@ -3287,19 +3312,20 @@ document.getElementById('btn-enviar-todo-sheets').addEventListener('click', envi
    Primero se descargan las cuatro listas; solo si las CUATRO llegan bien
    se reemplaza lo local — así, si la conexión falla a medias, nunca se
    borra nada de este navegador. */
-async function vaciarYRecargarDesdeSheets(){
-  const url = (document.getElementById('s-sheets-url').value || '').trim() || settings.sheetsUrl;
-  if(!url){ toast('Configura y guarda primero la URL de la aplicación web'); return; }
-  settings.sheetsUrl = url;
-  settings.sheetsEnabled = true;
-  save(LS.settings, settings);
+/* Descarga clientes, productos, paquetes de show y cotizaciones
+   DIRECTO de la hoja de Google Sheets y REEMPLAZA por completo lo que
+   haya guardado en este navegador — nunca se queda mostrando una versión
+   vieja o guardada de antes (ni de este mismo navegador ni de una copia
+   que alguien más haya hecho de este archivo). Esto es lo que corre
+   automáticamente al abrir el sistema y cada 20 segundos mientras está
+   abierto (ver iniciarPollingSheets), y también lo que corre el botón
+   manual "Vaciar y recargar".
 
-  if(!confirm('Esto va a REEMPLAZAR todos los clientes, productos, paquetes de show y cotizaciones guardados en este navegador por lo que haya en este momento en la hoja de Google Sheets. La hoja en sí NO se toca. Si no se puede conectar, no se borra nada aquí. ¿Continuar?')) return;
-
-  const btn = document.getElementById('btn-vaciar-y-recargar');
-  btn.disabled = true;
-  actualizarEstadoSheetsUI('Descargando todo desde Google Sheets…');
-
+   Solo si las CUATRO descargas salen bien se reemplaza lo local — así,
+   si por algún motivo no se puede conectar, se sigue mostrando lo último
+   que se pudo cargar en vez de dejar el sistema en blanco. */
+async function descargarYReemplazarTodoDesdeSheets(silencioso){
+  if(!settings.sheetsUrl) return {ok:false};
   try{
     const [datosClientes, datosProductos, datosPaquetes, datosCotizaciones] = await Promise.all([
       sheetsGetJSONP('clientes'),
@@ -3346,16 +3372,34 @@ async function vaciarYRecargarDesdeSheets(){
     refreshProductoSelects();
     renderPanel();
 
-    const resumen = `Listo: ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) cargados desde la hoja.`;
-    actualizarEstadoSheetsUI('🟢 ' + resumen, 'ok');
-    toast(resumen);
+    const resumen = `${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show y ${quotes.length} cotización(es) — igual que en la hoja ahora mismo.`;
+    actualizarEstadoSheetsUI('🟢 Al día con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
+    if(!silencioso) toast('Actualizado desde Google Sheets: ' + resumen);
+    return {ok:true};
   }catch(err){
-    console.error('Error recargando todo desde Google Sheets:', err);
-    actualizarEstadoSheetsUI('⚠️ No se pudo recargar desde Google Sheets — no se borró nada local. Revisa tu conexión.', 'error');
-    toast('No se pudo conectar con Google Sheets — no se borró nada');
-  }finally{
-    btn.disabled = false;
+    console.error('Error descargando desde Google Sheets:', err);
+    actualizarEstadoSheetsUI('⚠️ No se pudo conectar con Google Sheets — se sigue mostrando lo último que se pudo cargar.', 'error');
+    if(!silencioso) toast('No se pudo conectar con Google Sheets');
+    return {ok:false};
   }
+}
+
+/* Botón manual "Vaciar y recargar": pide confirmación (por si acaso) y
+   llama a la misma descarga-y-reemplazo de arriba. */
+async function vaciarYRecargarDesdeSheets(){
+  const url = (document.getElementById('s-sheets-url').value || '').trim() || settings.sheetsUrl;
+  if(!url){ toast('Configura y guarda primero la URL de la aplicación web'); return; }
+  settings.sheetsUrl = url;
+  settings.sheetsEnabled = true;
+  save(LS.settings, settings);
+
+  if(!confirm('Esto va a REEMPLAZAR todos los clientes, productos, paquetes de show y cotizaciones guardados en este navegador por lo que haya en este momento en la hoja de Google Sheets. La hoja en sí NO se toca. Si no se puede conectar, no se borra nada aquí. ¿Continuar?')) return;
+
+  const btn = document.getElementById('btn-vaciar-y-recargar');
+  btn.disabled = true;
+  actualizarEstadoSheetsUI('Descargando todo desde Google Sheets…');
+  await descargarYReemplazarTodoDesdeSheets(false);
+  btn.disabled = false;
 }
 document.getElementById('btn-vaciar-y-recargar').addEventListener('click', vaciarYRecargarDesdeSheets);
 
