@@ -16,17 +16,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    /* Paleta "fuego": naranjas y dorados vivos sobre una base cálida oscura,
-       en vez de la anterior paleta rosa/lavanda pastel. */
-    --rojo:#E8541C; --rojo-osc:#B93712; --rojo-claro:#FDE0CE; --rojo-suave:#FFF3EA;
-    --negro:#2B1810; --negro2:#1B0F0A; --gris-osc:#6B5548; --gris:#9C8477; --gris-claro:#FAF6F2;
-    --borde:#F0E2D4; --blanco:#ffffff;
-    --amarillo:#F5A623; --verde:#3F9D5D; --rojoestado:#C0392B;
-    --menta:#3F9D5D; --menta-suave:#E3F3E7; --durazno-suave:#FFE9CC; --terracota-suave:#FBE0D3;
-    --rail-hover:#432017; --rail-texto:#EFDDC9; --rail-texto-tenue:#B79381;
-    --sombra-sm:0 1px 3px rgba(30,16,10,.10), 0 1px 2px rgba(30,16,10,.06);
-    --sombra:0 6px 20px rgba(30,16,10,.12), 0 2px 6px rgba(30,16,10,.07);
-    --sombra-lg:0 20px 50px rgba(20,10,6,.24), 0 6px 16px rgba(20,10,6,.10);
+    /* Paleta "negro, rojo y pasteles": base neutra oscura con acentos rojos
+       vivos como color principal, y un juego de colores pastel suaves
+       (amarillo, azul, verde) reservados para distinguir estados. */
+    --rojo:#D62828; --rojo-osc:#9E1B1B; --rojo-claro:#FBE1E1; --rojo-suave:#FFF5F5;
+    --negro:#161616; --negro2:#0A0A0A; --gris-osc:#5C5C5C; --gris:#8A8A8A; --gris-claro:#F7F7F7;
+    --borde:#E9E9E9; --blanco:#ffffff;
+    --amarillo:#E8A73D; --verde:#4CAF6D; --azul:#3B6FA0; --rojoestado:#D62828;
+    --menta:#4CAF6D; --menta-suave:#E3F3E7; --durazno-suave:#FDECD8; --terracota-suave:#F7E0E0;
+    --azul-suave:#DCEBF7;
+    --rail-hover:#2A2A2A; --rail-texto:#EDEDED; --rail-texto-tenue:#9A9A9A;
+    --sombra-sm:0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+    --sombra:0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.07);
+    --sombra-lg:0 20px 50px rgba(0,0,0,.24), 0 6px 16px rgba(0,0,0,.10);
     --radio-sm:8px; --radio-md:12px; --radio-lg:16px;
     --ease:cubic-bezier(.22,1,.36,1);
     --sidebar-w:258px; --sidebar-w-tablet:78px;
@@ -39,7 +41,7 @@
   input,select,textarea{font-family:inherit}
   select{
     -webkit-appearance:none;-moz-appearance:none;appearance:none;
-    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239C8477' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A8A8A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 12px center;background-size:15px;
     padding-right:36px!important;cursor:pointer;
   }
@@ -47,8 +49,8 @@
   ::selection{background:var(--rojo-claro);color:var(--rojo-osc)}
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:#F0DCC4;border-radius:20px}
-  ::-webkit-scrollbar-thumb:hover{background:#E0B583}
+  ::-webkit-scrollbar-thumb{background:#D8D8D8;border-radius:20px}
+  ::-webkit-scrollbar-thumb:hover{background:#C2C2C2}
   :focus-visible{outline:2px solid var(--rojo);outline-offset:2px;border-radius:4px}
 
   /* ---------- LAYOUT ---------- */
@@ -68,7 +70,7 @@
   .mobile-close-btn{display:none}
 
   .sidebar-backdrop{
-    display:none;position:fixed;inset:0;background:rgba(20,10,6,.5);z-index:1450;
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1450;
     opacity:0;transition:opacity .25s var(--ease);
   }
   .sidebar-backdrop.show{display:block;opacity:1}
@@ -103,7 +105,7 @@
   nav.menu button .ico svg{width:100%;height:100%}
   nav.menu button:hover{background:var(--rail-hover);color:#fff}
   nav.menu button:active{transform:scale(.97)}
-  nav.menu button.active{background:var(--rojo);color:#fff;box-shadow:0 4px 14px rgba(232,84,28,.35)}
+  nav.menu button.active{background:var(--rojo);color:#fff;box-shadow:0 4px 14px rgba(214,40,40,.35)}
   nav.menu button.active::before{
     content:'';position:absolute;left:-16px;top:50%;transform:translateY(-50%);width:4px;height:18px;
     background:#fff;border-radius:0 4px 4px 0;
@@ -146,14 +148,14 @@
   .btn{
     background:var(--rojo);color:#fff;border:none;padding:10.5px 19px;border-radius:var(--radio-sm);font-size:13.5px;
     font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:background .18s var(--ease), transform .12s var(--ease), box-shadow .18s var(--ease);
-    box-shadow:0 2px 8px rgba(232,84,28,.22);
+    box-shadow:0 2px 8px rgba(214,40,40,.22);
   }
-  .btn:hover{background:var(--rojo-osc);box-shadow:0 4px 14px rgba(232,84,28,.3)}
+  .btn:hover{background:var(--rojo-osc);box-shadow:0 4px 14px rgba(214,40,40,.3)}
   .btn:active{transform:scale(.97)}
   .btn.secondary{background:#fff;color:var(--negro);border:1px solid var(--borde);box-shadow:var(--sombra-sm)}
   .btn.secondary:hover{background:var(--gris-claro);box-shadow:var(--sombra-sm)}
   .btn.small{padding:6.5px 13px;font-size:12.5px;border-radius:7px}
-  .btn.danger{background:#fff;color:#B25A3E;border:1px solid #F0CFC3;box-shadow:none}
+  .btn.danger{background:#fff;color:var(--rojo-osc);border:1px solid #F2C7C7;box-shadow:none}
   .btn.danger:hover{background:var(--terracota-suave)}
   .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 
@@ -167,6 +169,7 @@
   .card .card-val{font-size:27px;font-weight:800;letter-spacing:-.4px}
   .card .card-label{font-size:12px;color:var(--gris);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
   .card.pendiente{border-top:4px solid var(--amarillo)}
+  .card.confirmada{border-top:4px solid var(--azul)}
   .card.realizado{border-top:4px solid var(--verde)}
   .card.declinado{border-top:4px solid var(--rojoestado)}
   .card.total{border-top:4px solid var(--negro)}
@@ -186,7 +189,7 @@
   tbody td{padding:12px 14px;border-bottom:1px solid var(--borde);vertical-align:middle}
   tbody tr:last-child td{border-bottom:none}
   tbody tr{transition:background .15s var(--ease)}
-  tbody tr:hover{background:#FFF6EE}
+  tbody tr:hover{background:#FDF3F3}
   .row-actions{display:flex;gap:6px;flex-wrap:wrap}
   .empty-row td{text-align:center;color:var(--gris);padding:34px}
 
@@ -194,11 +197,12 @@
     border-radius:20px;border:1px solid var(--borde);padding:5px 10px;font-size:12.5px;font-weight:600;transition:border-color .15s var(--ease);
     background-position:right 10px center;background-size:12px;padding-right:28px!important;
   }
-  select.estado-select:hover{border-color:#D9D2E6}
+  select.estado-select:hover{border-color:#F2C7C7}
   .badge{padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:700;display:inline-block;letter-spacing:.2px}
-  .badge.Pendiente{background:var(--durazno-suave);color:#8A6018}
-  .badge.Realizado{background:var(--menta-suave);color:#2F7D57}
-  .badge.Declinado{background:var(--terracota-suave);color:#B25A3E}
+  .badge.Pendiente{background:var(--durazno-suave);color:#9A6A2E}
+  .badge.Confirmada{background:var(--azul-suave);color:#2C5C86}
+  .badge.Completada{background:var(--menta-suave);color:#2F7D57}
+  .badge.Declinado{background:var(--terracota-suave);color:var(--rojo-osc)}
 
   .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
   .toolbar input[type=text], .toolbar select{
@@ -286,10 +290,16 @@
   .paquete-block{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--borde)}
   .paquete-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
   .paquete-block h4{margin:0 0 10px;font-size:14px;font-weight:700}
+  .paquete-total{margin-top:12px;font-size:14px;font-weight:700;text-align:right}
+  .paquete-total span{color:var(--rojo);font-size:16px;margin-left:4px}
 
   /* ---------- MODAL ---------- */
   .modal-overlay{
-    display:none;position:fixed;inset:0;background:rgba(20,10,6,.55);z-index:1000;
+    /* Por encima de la barra lateral (z-index:1700) y de su barra superior
+       en móvil (1600) — si no, la barra lateral tapa parte de cualquier
+       modal (incluyendo el de Ver/PDF de una cotización) en vez de quedar
+       tras un overlay que cubre toda la pantalla. */
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1800;
     align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;
     backdrop-filter:blur(2px);
   }
@@ -324,112 +334,113 @@
      #doc-render es la "página" que se captura para el PDF: los márgenes de
      espacio se logran con el padding de este contenedor, ya que la imagen
      resultante se estira exactamente a una sola página sin recortes.
-     Diseño oscuro "de escenario": casi negro cálido con acentos dorados y
-     naranja fuego — se ve premium en pantalla y también al imprimir (se
-     fuerza a mantener los colores exactos con print-color-adjust). */
+     Diseño oscuro "de escenario": negro profundo con acentos rojos vivos y
+     detalles en tonos pastel — se ve premium en pantalla y también al
+     imprimir (se fuerza a mantener los colores exactos con print-color-adjust). */
   #doc-render, #catalog-render{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render *, #catalog-render *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render{
-    background:#1C0F09;width:100%;max-width:840px;margin:0 auto;box-sizing:border-box;
-    font-family:'Poppins',Arial,sans-serif;color:#F2E4D8;
+    background:#141414;width:100%;max-width:840px;margin:0 auto;box-sizing:border-box;
+    font-family:'Poppins',Arial,sans-serif;color:#F0E6E6;
     display:flex;align-items:stretch;
   }
 
   /* Encabezado y remitente compartidos con el catálogo (#catalog-render) */
-  .doc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:18px;border-bottom:3px solid var(--amarillo);margin-bottom:26px}
+  .doc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:18px;border-bottom:3px solid var(--rojo);margin-bottom:26px}
   .doc-brand{display:flex;align-items:center;gap:14px}
-  .doc-brand .logo-badge{background:#120906;border:1px solid rgba(245,166,35,.3);border-radius:10px;padding:9px 14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .doc-brand .logo-badge{background:#0A0A0A;border:1px solid rgba(214,40,40,.3);border-radius:10px;padding:9px 14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .doc-brand .logo-badge img{max-width:150px;max-height:46px;object-fit:contain;display:block}
-  .doc-brand .logo-fallback{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--amarillo),var(--rojo));color:#1C0F09;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
-  .doc-brand-text h2{margin:0;font-size:17px;font-weight:800;letter-spacing:.2px;color:#F8EEE3}
-  .doc-brand-text p{margin:3px 0 0;font-size:11px;color:#C9AD98;font-weight:600}
+  .doc-brand .logo-fallback{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+  .doc-brand-text h2{margin:0;font-size:17px;font-weight:800;letter-spacing:.2px;color:#FBEAEA}
+  .doc-brand-text p{margin:3px 0 0;font-size:11px;color:#C9A8A8;font-weight:600}
   .doc-meta-right{text-align:right;flex-shrink:0}
-  .doc-meta-right .doc-tag{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--amarillo);font-weight:700;margin-bottom:5px}
-  .doc-meta-right .doc-number{font-size:19px;font-weight:800;color:#F8EEE3;white-space:nowrap}
-  .doc-meta-right .doc-date{font-size:11.5px;color:#C9AD98;margin-top:3px}
-  .doc-footer{text-align:center;margin-top:8px;font-size:10px;color:#8A7364;letter-spacing:.3px}
+  .doc-meta-right .doc-tag{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--rojo);font-weight:700;margin-bottom:5px}
+  .doc-meta-right .doc-number{font-size:19px;font-weight:800;color:#FBEAEA;white-space:nowrap}
+  .doc-meta-right .doc-date{font-size:11.5px;color:#C9A8A8;margin-top:3px}
+  .doc-footer{text-align:center;margin-top:8px;font-size:10px;color:#8A7373;letter-spacing:.3px}
   .doc-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
   .doc-status-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}
 
   /* ---------- Cotización: diseño de dos columnas (rail + contenido, ambos oscuros) ---------- */
   .q-doc-side{
-    width:250px;flex-shrink:0;background:linear-gradient(165deg,#2B1810 0%,#160B07 100%);color:#fff;
+    width:250px;flex-shrink:0;background:linear-gradient(165deg,#1E1E1E 0%,#0A0A0A 100%);color:#fff;
     padding:40px 26px 30px;display:flex;flex-direction:column;
-    border-right:1px solid rgba(245,166,35,.14);
+    border-right:1px solid rgba(214,40,40,.18);
   }
   .q-side-logo{margin-bottom:16px}
   .q-side-logo img{max-width:175px;max-height:58px;object-fit:contain;display:block}
-  .q-side-logo .logo-fallback-side{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--amarillo),var(--rojo));color:#1C0F09;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .q-side-logo .logo-fallback-side{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
   .q-side-brand{font-size:14.5px;font-weight:800;letter-spacing:.3px;margin-bottom:2px}
-  .q-side-tagline{font-size:10px;color:#E8B37A;margin-bottom:20px}
-  .q-side-divider{height:2px;background:linear-gradient(90deg,var(--amarillo),var(--rojo));width:34px;margin-bottom:22px}
+  .q-side-tagline{font-size:10px;color:#F0B6B6;margin-bottom:20px}
+  .q-side-divider{height:2px;background:linear-gradient(90deg,var(--rojo),#F4B6B6);width:34px;margin-bottom:22px}
   .q-side-block{margin-bottom:20px}
-  .q-side-block h5{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--amarillo);font-weight:700;margin:0 0 7px}
-  .q-side-block p{font-size:10.8px;color:#E3D3C4;margin:0 0 3px;line-height:1.55;word-break:break-word}
+  .q-side-block h5{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--rojo);font-weight:700;margin:0 0 7px}
+  .q-side-block p{font-size:10.8px;color:#E3C9C9;margin:0 0 3px;line-height:1.55;word-break:break-word}
   .q-side-block p strong{color:#fff}
   .q-side-spacer{flex:1;min-height:12px}
   .q-side-contact{border-top:1px solid rgba(255,255,255,.14);padding-top:15px;margin-top:6px}
-  .q-side-contact p{font-size:10px;color:#E3D3C4;margin:0 0 7px;display:flex;align-items:center;gap:6px}
+  .q-side-contact p{font-size:10px;color:#E3C9C9;margin:0 0 7px;display:flex;align-items:center;gap:6px}
   .q-side-contact p:last-child{margin-bottom:0}
 
-  .q-doc-main{flex:1;min-width:0;padding:38px 42px 34px;background:#1C0F09}
+  .q-doc-main{flex:1;min-width:0;padding:38px 42px 34px;background:#141414}
   .q-doc-topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
-  .q-doc-tag{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--amarillo);font-weight:700}
-  .q-doc-number{font-size:21px;font-weight:800;color:#F8EEE3;margin-top:3px;white-space:nowrap}
-  .q-doc-date{font-size:10.5px;color:#9C8477;margin-top:2px}
+  .q-doc-tag{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--rojo);font-weight:700}
+  .q-doc-number{font-size:21px;font-weight:800;color:#FBEAEA;margin-top:3px;white-space:nowrap}
+  .q-doc-date{font-size:10.5px;color:#9C7F7F;margin-top:2px}
   .q-doc-topbar .badge{margin-top:2px}
 
-  .q-doc-title{font-size:18px;font-weight:800;color:#F8EEE3;margin:16px 0 22px;padding-bottom:14px;border-bottom:1px solid rgba(245,166,35,.2)}
+  .q-doc-title{font-size:18px;font-weight:800;color:#FBEAEA;margin:16px 0 22px;padding-bottom:14px;border-bottom:1px solid rgba(214,40,40,.25)}
 
   .q-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px}
-  .q-table thead th{padding:8px 6px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#E8B37A;border-bottom:2px solid rgba(245,166,35,.35);font-weight:700}
-  .q-table tbody td{padding:10px 6px;border-bottom:1px solid rgba(255,255,255,.08);color:#EDE0D4}
+  .q-table thead th{padding:8px 6px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#F0B6B6;border-bottom:2px solid rgba(214,40,40,.4);font-weight:700}
+  .q-table tbody td{padding:10px 6px;border-bottom:1px solid rgba(255,255,255,.08);color:#EDE0E0}
   .q-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.025)}
 
   .q-totals-wrap{display:flex;justify-content:flex-end;margin-bottom:22px}
   .q-totals{width:270px;display:flex;flex-direction:column;gap:5px}
-  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#C9AD98;padding:2px 2px}
-  .q-totals-row.discount{color:#6FCB93;font-weight:700}
+  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#C9A8A8;padding:2px 2px}
+  .q-totals-row.discount{color:#8FDBA8;font-weight:700}
   .q-totals-grand{
     display:flex;justify-content:space-between;align-items:center;
-    background:linear-gradient(90deg,var(--amarillo),var(--rojo));color:#1C0F09;
+    background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));color:#fff;
     padding:12px 14px;border-radius:8px;margin-top:6px;font-size:15.5px;font-weight:800;
   }
-  .q-totals-grand .amt{color:#1C0F09}
+  .q-totals-grand .amt{color:#fff}
 
-  .q-note{font-size:11px;background:rgba(245,166,35,.13);border-left:3px solid var(--amarillo);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:18px;color:#F0C583}
-  .q-notes-block{font-size:11px;color:#C9AD98;margin-bottom:18px;line-height:1.6}
-  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:#9C8477;font-weight:700;display:block;margin-bottom:5px}
+  .q-note{font-size:11px;background:rgba(214,40,40,.14);border-left:3px solid var(--rojo);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:18px;color:#F7C9C9}
+  .q-notes-block{font-size:11px;color:#C9A8A8;margin-bottom:18px;line-height:1.6}
+  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:#9C7F7F;font-weight:700;display:block;margin-bottom:5px}
 
-  .q-terms{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;margin-bottom:26px;font-size:9px;color:#8A7364;line-height:1.7}
+  .q-terms{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;margin-bottom:26px;font-size:9px;color:#8A7373;line-height:1.7}
 
   .q-signs{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:4px;margin-bottom:6px}
-  .q-signs div{border-top:1px solid rgba(255,255,255,.2);text-align:center;padding-top:7px;font-size:10.5px;color:#C9AD98}
+  .q-signs div{border-top:1px solid rgba(255,255,255,.2);text-align:center;padding-top:7px;font-size:10.5px;color:#C9A8A8}
 
   /* Insignias de estado sobre fondo oscuro: relleno translúcido + borde,
      en vez del relleno pastel usado sobre fondo blanco en el resto de la app. */
-  #doc-render .badge.Pendiente{background:rgba(245,166,35,.16);color:var(--amarillo);border:1px solid rgba(245,166,35,.4)}
-  #doc-render .badge.Realizado{background:rgba(63,157,93,.18);color:#6FCB93;border:1px solid rgba(63,157,93,.4)}
-  #doc-render .badge.Declinado{background:rgba(192,57,43,.18);color:#FF8A72;border:1px solid rgba(192,57,43,.45)}
+  #doc-render .badge.Pendiente{background:rgba(232,167,61,.18);color:var(--amarillo);border:1px solid rgba(232,167,61,.4)}
+  #doc-render .badge.Confirmada{background:rgba(59,111,160,.22);color:#8FC1EE;border:1px solid rgba(59,111,160,.45)}
+  #doc-render .badge.Completada{background:rgba(76,175,109,.18);color:#7FDB9F;border:1px solid rgba(76,175,109,.4)}
+  #doc-render .badge.Declinado{background:rgba(214,40,40,.18);color:#FF8A8A;border:1px solid rgba(214,40,40,.45)}
 
   /* ---------- CATÁLOGO EXPORTABLE (PDF) ---------- */
   #catalog-render{
-    background:#1C0F09;width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;
-    font-family:'Poppins',Arial,sans-serif;color:#F2E4D8;
+    background:#141414;width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;
+    font-family:'Poppins',Arial,sans-serif;color:#F0E6E6;
     padding:46px 50px 42px;
   }
-  .catalog-intro{font-size:12px;color:#C9AD98;margin:0 0 24px;line-height:1.65}
+  .catalog-intro{font-size:12px;color:#C9A8A8;margin:0 0 24px;line-height:1.65}
   .cat-section{margin-bottom:24px}
   .cat-section:last-of-type{margin-bottom:30px}
-  .cat-title{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#F8EEE3;border-bottom:2px solid var(--amarillo);padding-bottom:9px;margin-bottom:13px}
+  .cat-title{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#FBEAEA;border-bottom:2px solid var(--rojo);padding-bottom:9px;margin-bottom:13px}
   .cat-title .cat-ico{font-size:17px}
   .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .cat-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:10px 12px}
   .cat-item-ico{font-size:19px;width:26px;text-align:center;flex-shrink:0}
-  .cat-item-name{flex:1;font-size:12px;font-weight:600;color:#EDE0D4;line-height:1.3}
-  .cat-item-price{font-size:12.5px;font-weight:800;color:var(--amarillo);white-space:nowrap}
+  .cat-item-name{flex:1;font-size:12px;font-weight:600;color:#EDE0E0;line-height:1.3}
+  .cat-item-price{font-size:12.5px;font-weight:800;color:#F4B6B6;white-space:nowrap}
 
-  .contact-band{display:flex;justify-content:center;align-items:center;gap:32px;flex-wrap:wrap;background:linear-gradient(90deg,var(--amarillo),var(--rojo));color:#1C0F09;border-radius:10px;padding:16px 22px;margin:26px 0 16px}
+  .contact-band{display:flex;justify-content:center;align-items:center;gap:32px;flex-wrap:wrap;background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));color:#fff;border-radius:10px;padding:16px 22px;margin:26px 0 16px}
   .contact-item{display:flex;align-items:center;gap:9px;font-size:12.5px}
   .contact-item strong{font-weight:800;letter-spacing:.2px}
   .contact-ico{font-size:17px}
@@ -928,7 +939,8 @@
         <select id="filtro-estado">
           <option value="">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
-          <option value="Realizado">Realizado</option>
+          <option value="Confirmada">Confirmada por el cliente</option>
+          <option value="Completada">Completada</option>
           <option value="Declinado">Declinado</option>
         </select>
       </div>
@@ -990,7 +1002,8 @@
             <label>Estado inicial</label>
             <select id="q-estado-inicial">
               <option value="Pendiente">Pendiente</option>
-              <option value="Realizado">Realizado</option>
+              <option value="Confirmada">Confirmada por el cliente</option>
+              <option value="Completada">Completada</option>
               <option value="Declinado">Declinado</option>
             </select>
           </div>
@@ -1277,7 +1290,8 @@
       <strong>Estado:</strong>
       <select class="estado-select" id="ver-estado-select">
         <option value="Pendiente">Pendiente</option>
-        <option value="Realizado">Realizado</option>
+        <option value="Confirmada">Confirmada por el cliente</option>
+        <option value="Completada">Completada</option>
         <option value="Declinado">Declinado</option>
       </select>
     </div>
@@ -1285,6 +1299,7 @@
     <div class="doc-actions">
       <button class="btn secondary" id="btn-imprimir">Imprimir</button>
       <button class="btn" id="btn-descargar-pdf">Descargar PDF</button>
+      <button class="btn" id="btn-descargar-factura" style="display:none;background:var(--verde);border-color:var(--verde)">Descargar Factura</button>
     </div>
   </div>
 </div>
@@ -1471,6 +1486,15 @@ let showPackages = load(LS.showPackages, DEFAULT_SHOW_PACKAGES);
   if(cambio){ save(LS.showPackages, showPackages); }
 })();
 
+/* Migración: el estado "Realizado" se renombró a "Completada" (y se agregó
+   el estado "Confirmada" para cuando el cliente confirma el evento antes de
+   que se realice). Actualiza cualquier cotización guardada localmente. */
+(function migrarEstadoRealizadoACompletada(){
+  let cambio = false;
+  quotes.forEach(q=>{ if(q.estado === 'Realizado'){ q.estado = 'Completada'; cambio = true; } });
+  if(cambio){ save(LS.quotes, quotes); }
+})();
+
 let currentItems = [];
 let editingQuoteId = null;
 let currentViewingQuoteId = null;
@@ -1564,15 +1588,17 @@ document.getElementById('logo-input').addEventListener('change', function(e){
    ========================================================= */
 function renderPanel(){
   const pend = quotes.filter(q=>q.estado==='Pendiente').length;
-  const real = quotes.filter(q=>q.estado==='Realizado');
+  const conf = quotes.filter(q=>q.estado==='Confirmada').length;
+  const comp = quotes.filter(q=>q.estado==='Completada');
   const decl = quotes.filter(q=>q.estado==='Declinado').length;
-  const totalFacturado = real.reduce((s,q)=> s + (q.total||0), 0);
+  const totalFacturado = comp.reduce((s,q)=> s + (q.total||0), 0);
 
   document.getElementById('panel-cards').innerHTML = `
     <div class="card"><div class="card-top"><span class="card-ico" style="color:var(--gris)"><svg><use href="#ico-clientes"></use></svg></span></div><div class="card-val">${clients.length}</div><div class="card-label">Clientes</div></div>
     <div class="card"><div class="card-top"><span class="card-ico" style="color:var(--gris)"><svg><use href="#ico-productos"></use></svg></span></div><div class="card-val">${products.length}</div><div class="card-label">Productos</div></div>
     <div class="card pendiente"><div class="card-top"><span class="card-ico" style="color:var(--amarillo)"><svg><use href="#ico-reloj"></use></svg></span></div><div class="card-val">${pend}</div><div class="card-label">Pendientes</div></div>
-    <div class="card realizado"><div class="card-top"><span class="card-ico" style="color:var(--verde)"><svg><use href="#ico-check"></use></svg></span></div><div class="card-val">${real.length}</div><div class="card-label">Realizadas</div></div>
+    <div class="card confirmada"><div class="card-top"><span class="card-ico" style="color:var(--azul)"><svg><use href="#ico-check"></use></svg></span></div><div class="card-val">${conf}</div><div class="card-label">Confirmadas</div></div>
+    <div class="card realizado"><div class="card-top"><span class="card-ico" style="color:var(--verde)"><svg><use href="#ico-check"></use></svg></span></div><div class="card-val">${comp.length}</div><div class="card-label">Completadas</div></div>
     <div class="card declinado"><div class="card-top"><span class="card-ico" style="color:var(--rojoestado)"><svg><use href="#ico-equis-circulo"></use></svg></span></div><div class="card-val">${decl}</div><div class="card-label">Declinadas</div></div>
     <div class="card total"><div class="card-top"><span class="card-ico" style="color:var(--negro)"><svg><use href="#ico-dinero"></use></svg></span></div><div class="card-val">${money(totalFacturado)}</div><div class="card-label">Total facturado</div></div>
   `;
@@ -1592,7 +1618,7 @@ function rowQuoteHTML(q){
     <td>
       <select class="estado-select" data-action="estado" data-id="${q.id}">
         <option value="Pendiente" ${q.estado==='Pendiente'?'selected':''}>Pendiente</option>
-        <option value="Realizado" ${q.estado==='Realizado'?'selected':''}>Realizado</option>
+        <option value="Confirmada" ${q.estado==='Confirmada'?'selected':''}>Confirmada por el cliente</option><option value="Completada" ${q.estado==='Completada'?'selected':''}>Completada</option>
         <option value="Declinado" ${q.estado==='Declinado'?'selected':''}>Declinado</option>
       </select>
     </td>
@@ -1607,6 +1633,9 @@ function attachQuoteRowEvents(container){
   });
   container.querySelectorAll('[data-action="ver"]').forEach(btn=>{
     btn.addEventListener('click', ()=> openVerModal(btn.getAttribute('data-id')));
+  });
+  container.querySelectorAll('[data-action="factura"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> generarFacturaDesdeLista(btn.getAttribute('data-id')));
   });
 }
 function updateQuoteEstado(id, estado){
@@ -1725,11 +1754,14 @@ function renderHistorialBody(){
       <td>
         <select class="estado-select" data-action="estado" data-id="${q.id}">
           <option value="Pendiente" ${q.estado==='Pendiente'?'selected':''}>Pendiente</option>
-          <option value="Realizado" ${q.estado==='Realizado'?'selected':''}>Realizado</option>
+          <option value="Confirmada" ${q.estado==='Confirmada'?'selected':''}>Confirmada por el cliente</option><option value="Completada" ${q.estado==='Completada'?'selected':''}>Completada</option>
           <option value="Declinado" ${q.estado==='Declinado'?'selected':''}>Declinado</option>
         </select>
       </td>
-      <td><button class="btn secondary small" data-action="ver" data-id="${q.id}">Ver / PDF</button></td>
+      <td class="row-actions">
+        <button class="btn secondary small" data-action="ver" data-id="${q.id}">Ver / PDF</button>
+        ${q.estado==='Completada' ? `<button class="btn small" style="background:var(--verde);box-shadow:none" data-action="factura" data-id="${q.id}">Factura</button>` : ''}
+      </td>
     </tr>
   `).join('') : `<tr class="empty-row"><td colspan="6">Este cliente no tiene cotizaciones.</td></tr>`;
   attachQuoteRowEvents(body);
@@ -1844,12 +1876,13 @@ function renderCotizaciones(){
       <td>
         <select class="estado-select" data-action="estado" data-id="${q.id}">
           <option value="Pendiente" ${q.estado==='Pendiente'?'selected':''}>Pendiente</option>
-          <option value="Realizado" ${q.estado==='Realizado'?'selected':''}>Realizado</option>
+          <option value="Confirmada" ${q.estado==='Confirmada'?'selected':''}>Confirmada por el cliente</option><option value="Completada" ${q.estado==='Completada'?'selected':''}>Completada</option>
           <option value="Declinado" ${q.estado==='Declinado'?'selected':''}>Declinado</option>
         </select>
       </td>
       <td class="row-actions">
         <button class="btn secondary small" data-action="ver" data-id="${q.id}">Ver / PDF</button>
+        ${q.estado==='Completada' ? `<button class="btn small" style="background:var(--verde);box-shadow:none" data-action="factura" data-id="${q.id}">Factura</button>` : ''}
         <button class="btn secondary small" data-action="editar" data-id="${q.id}">Editar</button>
         <button class="btn secondary small" data-action="duplicar" data-id="${q.id}">Duplicar</button>
         <button class="btn danger small" data-action="eliminar" data-id="${q.id}">Eliminar</button>
@@ -2284,15 +2317,43 @@ function openVerModal(id){
   if(!q) return;
   currentViewingQuoteId = id;
   document.getElementById('ver-estado-select').value = q.estado;
-  document.getElementById('doc-render').innerHTML = buildDocHTML(q);
+  document.getElementById('doc-render').innerHTML = buildDocHTML(q, false);
+  document.getElementById('btn-descargar-factura').style.display = (q.estado === 'Completada') ? '' : 'none';
   openModal('modal-ver');
+}
+function nextFrame(){ return new Promise(r=> requestAnimationFrame(()=> requestAnimationFrame(r))); }
+/* Genera la FACTURA (PDF) de una cotización ya completada, reutilizando el
+   mismo render de #doc-render pero en "modo factura". Al terminar deja el
+   documento visible de nuevo en su versión de cotización normal. */
+async function generarFacturaPDF(q){
+  const el = document.getElementById('doc-render');
+  const htmlCotizacion = el.innerHTML;
+  try{
+    el.innerHTML = buildDocHTML(q, true);
+    await nextFrame();
+    await elementToPdfAndSave(el, `factura-${pad5(q.numero)}.pdf`);
+    toast('Factura descargada');
+  }catch(err){
+    console.error('Error al generar la factura:', err);
+    toast('Error al generar la factura');
+  }finally{
+    el.innerHTML = htmlCotizacion;
+  }
+}
+async function generarFacturaDesdeLista(id){
+  const q = quotes.find(x=>x.id===id);
+  if(!q) return;
+  if(q.estado !== 'Completada'){ toast('Solo se puede facturar una cotización completada'); return; }
+  openVerModal(id);
+  await nextFrame();
+  await generarFacturaPDF(q);
 }
 document.getElementById('ver-estado-select').addEventListener('change', function(){
   if(!currentViewingQuoteId) return;
   updateQuoteEstado(currentViewingQuoteId, this.value);
 });
 
-function buildDocHTML(q){
+function buildDocHTML(q, esFactura){
   // Diseño de dos columnas: un rail oscuro (marca, cliente, evento, pago y
   // contacto) y un panel principal claro (servicios, totales, términos y
   // firmas). El logo va directo sobre el rail oscuro, sin placa adicional.
@@ -2360,14 +2421,15 @@ function buildDocHTML(q){
     <div class="q-doc-main">
       <div class="q-doc-topbar">
         <div>
-          <div class="q-doc-tag">Cotización de servicios</div>
+          <div class="q-doc-tag">${esFactura ? 'FACTURA' : 'Cotización de servicios'}</div>
           <div class="q-doc-number">No. ${pad5(q.numero)}</div>
-          <div class="q-doc-date">Emitida: ${new Date(q.fechaCreacion).toLocaleDateString('es-DO')}</div>
+          <div class="q-doc-date">${esFactura ? 'Fecha de factura: ' + new Date().toLocaleDateString('es-DO') : 'Emitida: ' + new Date(q.fechaCreacion).toLocaleDateString('es-DO')}</div>
         </div>
         <span class="badge ${q.estado}">${escapeHtml(q.estado||'')}</span>
       </div>
 
       <h3 class="q-doc-title">${escapeHtml(q.nombreShow || 'Propuesta de servicios')}</h3>
+      ${esFactura ? `<div class="q-note" style="background:var(--menta-suave);border-left-color:var(--verde);color:#1f5a35">Servicio completado — esta factura confirma el cierre del contrato.</div>` : ''}
 
       <table class="q-table">
         <thead><tr><th>Servicio</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio</th><th style="text-align:right">Subtotal</th></tr></thead>
@@ -2406,7 +2468,7 @@ function buildDocHTML(q){
    contenido del elemento, para que nunca se corte nada a la mitad. Se
    reutiliza tanto para la cotización (Ver/PDF) como para el catálogo. */
 async function elementToPdfAndSave(el, filename){
-  const canvas = await html2canvas(el, {scale:2, backgroundColor:'#1C0F09'});
+  const canvas = await html2canvas(el, {scale:2, backgroundColor:'#141414'});
   const imgData = canvas.toDataURL('image/png');
   const { jsPDF } = window.jspdf;
   const widthMM = 210; // ancho A4
@@ -2429,6 +2491,17 @@ document.getElementById('btn-descargar-pdf').addEventListener('click', async ()=
     toast('Error al generar el PDF');
   }finally{
     btn.disabled = false; btn.textContent = 'Descargar PDF';
+  }
+});
+document.getElementById('btn-descargar-factura').addEventListener('click', async ()=>{
+  const q = quotes.find(x=>x.id===currentViewingQuoteId);
+  if(!q) return;
+  const btn = document.getElementById('btn-descargar-factura');
+  btn.disabled = true; btn.textContent = 'Generando...';
+  try{
+    await generarFacturaPDF(q);
+  }finally{
+    btn.disabled = false; btn.textContent = 'Descargar Factura';
   }
 });
 
@@ -2620,7 +2693,27 @@ function wirePkgItemRow(tr){
       detalleInput.value = DETALLES_PRODUCTOS_SHOW[p.nombre] || detalleInput.value || '';
     }
   });
-  tr.querySelector('[data-action="del-pkg-item"]').addEventListener('click', ()=> tr.remove());
+  tr.querySelector('[data-action="del-pkg-item"]').addEventListener('click', ()=>{
+    const block = tr.closest('.paquete-block');
+    tr.remove();
+    if(block) actualizarTotalPaquete(block);
+  });
+}
+
+/* Suma cantidad × precio de todos los artículos de un paquete — para que
+   se vea de un vistazo cuánto cuesta ese paquete en total. */
+function calcularTotalPaquete(block){
+  let total = 0;
+  block.querySelectorAll('tbody tr').forEach(tr=>{
+    const cantidad = parseFloat(tr.querySelector('.pkg-item-cant').value)||0;
+    const precio = parseFloat(tr.querySelector('.pkg-item-precio').value)||0;
+    total += cantidad * precio;
+  });
+  return total;
+}
+function actualizarTotalPaquete(block){
+  const el = block.querySelector('[data-pkg-total]');
+  if(el) el.textContent = money(calcularTotalPaquete(block));
 }
 
 function renderPaquetesEditor(){
@@ -2635,18 +2728,25 @@ function renderPaquetesEditor(){
         </tbody>
       </table>
       <button class="btn secondary small" type="button" data-action="add-pkg-item" style="margin-top:8px">+ Agregar servicio</button>
+      <div class="paquete-total">Total del paquete: <span data-pkg-total>RD$ 0.00</span></div>
     </div>
   `).join('');
 
   wrap.querySelectorAll('.paquete-block').forEach(block=>{
     block.querySelectorAll('tbody tr').forEach(tr=> wirePkgItemRow(tr));
+    // Delegado: cualquier cambio de cantidad, precio o artículo dentro de
+    // este paquete recalcula el total mostrado.
+    block.addEventListener('input', ()=> actualizarTotalPaquete(block));
+    block.addEventListener('change', ()=> actualizarTotalPaquete(block));
     block.querySelector('[data-action="add-pkg-item"]').addEventListener('click', ()=>{
       const tbody = block.querySelector('tbody');
       const tr = document.createElement('tr');
       tr.innerHTML = pkgItemRowHTML();
       wirePkgItemRow(tr);
       tbody.appendChild(tr);
+      actualizarTotalPaquete(block);
     });
+    actualizarTotalPaquete(block);
   });
 }
 document.getElementById('btn-guardar-paquetes').addEventListener('click', async ()=>{
@@ -3098,7 +3198,7 @@ function cotizacionDesdeFilaRemota(r){
     nombreShow: r.nombreShow||'',
     tipoContrato: r.tipoContrato||'',
     referidoPor: r.referidoPor||'',
-    estado: r.estado||'Pendiente',
+    estado: (r.estado === 'Realizado') ? 'Completada' : (r.estado||'Pendiente'),
     items: items,
     subtotal: num('subtotal'),
     descuentoActivo: bool('descuentoActivo'),
