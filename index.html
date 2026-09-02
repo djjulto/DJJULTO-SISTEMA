@@ -1239,7 +1239,7 @@
 
       <div class="panel-block">
         <h3>Ganancia por cotización completada</h3>
-        <div class="sub" style="margin:-6px 0 12px">Al marcar una cotización como "Completada" se calcula y se guarda la ganancia de ese evento (con los precios de compra vigentes en ese momento), para que quede como registro fijo aunque luego cambies el costo de un producto. Si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más.</div>
+        <div class="sub" style="margin:-6px 0 12px">Al marcar una cotización como "Completada" se calcula y se guarda la ganancia de ese evento (con los precios de compra vigentes en ese momento), para que quede como registro fijo aunque luego cambies el costo de un producto. Si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más — esos casos se marcan con ⚠️ (abre "Detalle" para ver exactamente cuál servicio le falta el precio de compra).</div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th><th>% Margen</th><th></th></tr></thead>
@@ -2252,12 +2252,18 @@ function renderProductos(){
   body.innerHTML = list.length ? list.map(p=>{
     const ganancia = (p.precio||0) - (p.precioCompra||0);
     const margen = p.precio ? (ganancia / p.precio * 100) : 0;
+    // Si no tiene precio de compra registrado, la ganancia/margen mostrados
+    // quedan de más (costo contado como RD$0.00) — se avisa con ⚠️ para que
+    // se sepa que falta completarlo, en vez de dar por buena una ganancia
+    // del 100%.
+    const sinCosto = !p.precioCompra;
+    const aviso = sinCosto ? ` <span title="Falta registrar el precio de compra de este servicio — mientras tanto su ganancia se calcula como si el costo fuera RD$0.00.">⚠️</span>` : '';
     return `
     <tr data-id="${p.id}">
       <td>${escapeHtml(p.nombre)}</td>
       <td>${escapeHtml(p.categoria||'-')}</td>
       <td>${money(p.precio)}</td>
-      <td>${money(p.precioCompra||0)}</td>
+      <td>${money(p.precioCompra||0)}${aviso}</td>
       <td style="color:var(--verde);font-weight:700">${money(ganancia)}</td>
       <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
       <td class="row-actions">
@@ -2654,7 +2660,15 @@ function calcularDetalleItemsEnVivo(q){
     const subtotal = it.subtotal||0;
     const gananciaItem = subtotal - costoTotal;
     const margenItem = subtotal ? (gananciaItem / subtotal * 100) : 0;
-    return { ...it, costoUnitario, costoTotal, gananciaItem, margenItem };
+    // Bandera para avisar en Contabilidad cuando la ganancia de un renglón
+    // sale igual a lo cobrado: o el renglón no está ligado a ningún
+    // producto del catálogo (se escribió a mano), o sí lo está pero ese
+    // producto todavía no tiene su "precio de compra" registrado — en
+    // ambos casos el costo se cuenta como RD$0.00 y la ganancia mostrada
+    // queda de más, así que hay que avisarlo en vez de mostrarlo como si
+    // fuera la ganancia real.
+    const sinCosto = !prod || !prod.precioCompra;
+    return { ...it, costoUnitario, costoTotal, gananciaItem, margenItem, sinCosto };
   });
 }
 /* Desglose de ganancia POR ITEM para mostrar en pantalla: si la cotización
@@ -2684,6 +2698,13 @@ function actualizarGananciaSnapshot(q){
   q.gananciaCalculada = gananciaCalculada;
   q.margenCalculado = margenCalculado;
   q.gananciaFecha = new Date().toISOString();
+}
+/* true si algún servicio de la cotización no tiene precio de compra
+   registrado (o no está ligado a ningún producto del catálogo) — en ese
+   caso su costo se cuenta como RD$0.00 y la ganancia mostrada puede
+   quedar igual al total cobrado, que es justo lo que hay que avisar. */
+function cotizacionTieneCostoIncompleto(q){
+  return detalleItemsGanancia(q).some(it => it.sinCosto);
 }
 function fechaDentroDelRango(fecha, desde, hasta){
   if(!fecha) return false;
@@ -2743,6 +2764,8 @@ function renderContabilidad(){
     const costo = costoDeCotizacion(q);
     const ganancia = gananciaDeCotizacion(q);
     const margen = q.total ? (ganancia / q.total * 100) : 0;
+    const incompleto = cotizacionTieneCostoIncompleto(q);
+    const aviso = incompleto ? ` <span title="Uno o más servicios de esta cotización no tienen precio de compra registrado (Ajustes → Productos) — su costo se cuenta como RD$0.00, así que esta ganancia puede estar de más. Abre &quot;Detalle&quot; para ver cuál.">⚠️</span>` : '';
     return `
       <tr>
         <td>#${pad5(q.numero)}</td>
@@ -2750,7 +2773,7 @@ function renderContabilidad(){
         <td>${q.fechaEvento||'-'}</td>
         <td>${money(q.total)}</td>
         <td>${money(costo)}</td>
-        <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}</td>
+        <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}${aviso}</td>
         <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
         <td><button type="button" class="btn secondary small" data-action="detalle-ganancia" data-id="${q.id}">Detalle</button></td>
       </tr>
@@ -2767,9 +2790,11 @@ function abrirDetalleGanancia(id){
   const detalle = detalleItemsGanancia(q);
   document.getElementById('detalle-ganancia-titulo').textContent = `Detalle de ganancia — Cotización #${pad5(q.numero)} (${q.clienteNombre||''})`;
   const body = document.getElementById('detalle-ganancia-body');
-  body.innerHTML = detalle.length ? detalle.map(it=>`
-    <tr>
-      <td>${escapeHtml(it.descripcion||'-')}</td>
+  body.innerHTML = detalle.length ? detalle.map(it=>{
+    const aviso = it.sinCosto ? ` <span title="Este servicio no tiene precio de compra registrado en Ajustes → Productos (o no está ligado a ningún producto del catálogo) — su costo se cuenta como RD$0.00.">⚠️</span>` : '';
+    return `
+    <tr${it.sinCosto ? ' style="background:var(--durazno-suave)"' : ''}>
+      <td>${escapeHtml(it.descripcion||'-')}${aviso}</td>
       <td>${it.cantidad||0}</td>
       <td>${money(it.precio||0)}</td>
       <td>${money(it.subtotal||0)}</td>
@@ -2778,7 +2803,8 @@ function abrirDetalleGanancia(id){
       <td style="color:${(it.gananciaItem||0) >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(it.gananciaItem||0)}</td>
       <td style="color:${(it.margenItem||0) >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${(it.margenItem||0).toFixed(1)}%</td>
     </tr>
-  `).join('') : `<tr class="empty-row"><td colspan="8">Esta cotización no tiene servicios.</td></tr>`;
+  `;
+  }).join('') : `<tr class="empty-row"><td colspan="8">Esta cotización no tiene servicios.</td></tr>`;
   const costo = costoDeCotizacion(q);
   const ganancia = gananciaDeCotizacion(q);
   const margen = q.total ? (ganancia / q.total * 100) : 0;
@@ -2821,12 +2847,13 @@ function exportarContabilidadExcel(){
   ];
 
   const hojaGanancias = [
-    ['No.', 'Cliente', 'Fecha evento', 'Total cobrado', 'Costo estimado', 'Ganancia', '% Margen'],
+    ['No.', 'Cliente', 'Fecha evento', 'Total cobrado', 'Costo estimado', 'Ganancia', '% Margen', 'Costo completo'],
     ...completadas.map(q=>{
       const costo = costoDeCotizacion(q);
       const ganancia = gananciaDeCotizacion(q);
       const margen = q.total ? Number((ganancia / q.total * 100).toFixed(1)) : 0;
-      return [pad5(q.numero), q.clienteNombre||'', q.fechaEvento||'', q.total||0, costo, ganancia, margen];
+      const costoCompleto = cotizacionTieneCostoIncompleto(q) ? 'No (falta precio de compra en algún servicio)' : 'Sí';
+      return [pad5(q.numero), q.clienteNombre||'', q.fechaEvento||'', q.total||0, costo, ganancia, margen, costoCompleto];
     }),
   ];
 
@@ -2834,11 +2861,12 @@ function exportarContabilidadExcel(){
   // por ejemplo, dentro del Show VIP: pirotecnia fría, pistola CO2, etc.,
   // cada uno con su propio precio de venta, costo real y ganancia.
   const hojaDetalleItems = [
-    ['No. cotización', 'Cliente', 'Servicio', 'Cantidad', 'Precio venta', 'Subtotal venta', 'Costo unitario', 'Costo total', 'Ganancia', '% Margen'],
+    ['No. cotización', 'Cliente', 'Servicio', 'Cantidad', 'Precio venta', 'Subtotal venta', 'Costo unitario', 'Costo total', 'Ganancia', '% Margen', 'Costo registrado'],
     ...completadas.flatMap(q => detalleItemsGanancia(q).map(it => [
       pad5(q.numero), q.clienteNombre||'', it.descripcion||'-', it.cantidad||0,
       it.precio||0, it.subtotal||0, it.costoUnitario||0, it.costoTotal||0,
       it.gananciaItem||0, Number((it.margenItem||0).toFixed(1)),
+      it.sinCosto ? 'No' : 'Sí',
     ])),
   ];
 
