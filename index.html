@@ -3927,6 +3927,21 @@ function actualizarEstadoSheetsUI(texto, tipo){
   el.style.color = tipo === 'error' ? 'var(--rojo-osc)' : (tipo === 'ok' ? '#2F7D57' : '');
 }
 
+/* Convierte a número un valor que viene de una celda de Google Sheets,
+   tolerando que se haya escrito a mano con formato (por ejemplo
+   "RD$25,500.00", "25,500" con separador de miles, o con espacios) — si
+   se usara Number(...) directo, cualquiera de esos formatos de texto da
+   NaN y el valor se pierde (se cuenta como RD$0.00) aunque la celda sí
+   tenga el dato. Quita todo lo que no sea dígito, punto o signo menos, y
+   ya entonces intenta convertirlo. */
+function parseNumeroFlexible(v){
+  if(v == null || v === '') return 0;
+  if(typeof v === 'number') return isNaN(v) ? 0 : v;
+  const limpio = String(v).replace(/[^0-9.\-]/g, '');
+  const n = parseFloat(limpio);
+  return isNaN(n) ? 0 : n;
+}
+
 /* Lee datos de la hoja vía JSONP (sin fetch, sin CORS).
    tipo: 'clientes' (por defecto) o 'cotizaciones'. */
 function sheetsGetJSONP(tipo, timeoutMs){
@@ -4181,13 +4196,14 @@ async function sincronizarProductosDesdeSheets(manual){
       id: String(r.id||'').trim() || uid(),
       nombre: r.nombre||'',
       categoria: r.categoria||'',
-      precio: Number(r.precio)||0,
+      precio: parseNumeroFlexible(r.precio),
+      precioCompra: parseNumeroFlexible(r.precioCompra),
     })).filter(p => p.nombre);
 
     const idsRemotos = new Set(remotos.map(p=>p.id));
     let cambios = false;
 
-    const camposComparables = ['nombre','categoria','precio'];
+    const camposComparables = ['nombre','categoria','precio','precioCompra'];
     remotos.forEach(rp=>{
       const local = products.find(p=>p.id===rp.id);
       if(!local){
@@ -4285,7 +4301,7 @@ async function sincronizarPaquetesDesdeSheets(manual){
    convierten los números, booleanos y el JSON de servicios de vuelta a
    los tipos que usa el resto del sistema). */
 function cotizacionDesdeFilaRemota(r){
-  const num = campo => { const v = Number(r[campo]); return isNaN(v) ? 0 : v; };
+  const num = campo => parseNumeroFlexible(r[campo]);
   const bool = campo => r[campo] === true || r[campo] === 'TRUE' || r[campo] === 'true';
   let items = [];
   try{
@@ -4590,8 +4606,8 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
 
     products = datosProductos.productos.map(r => ({
       id: String(r.id||'').trim() || uid(),
-      nombre: r.nombre||'', categoria: r.categoria||'', precio: Number(r.precio)||0,
-      precioCompra: Number(r.precioCompra)||0, _deSheets:true,
+      nombre: r.nombre||'', categoria: r.categoria||'', precio: parseNumeroFlexible(r.precio),
+      precioCompra: parseNumeroFlexible(r.precioCompra), _deSheets:true,
     })).filter(p => p.nombre);
 
     showPackages = datosPaquetes.paquetes
@@ -4606,7 +4622,7 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     gastos = datosGastos.gastos.map(r => ({
       id: String(r.id||'').trim() || uid(),
       fecha: r.fecha||'', concepto: r.concepto||'', categoria: r.categoria||'',
-      monto: Number(r.monto)||0, _deSheets:true,
+      monto: parseNumeroFlexible(r.monto), _deSheets:true,
     })).filter(g => g.concepto);
 
     quotes = datosCotizaciones.cotizaciones
