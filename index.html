@@ -165,6 +165,11 @@
     color:var(--gris-osc);margin:0 0 10px;
   }
   .panel-seccion-hint{font-weight:500;text-transform:none;letter-spacing:0;color:var(--gris);font-size:12px}
+  .contab-filtro{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+  .contab-filtro .field{margin:0}
+  .contab-filtro .field label{display:block;font-size:11.5px;font-weight:700;color:var(--gris-osc);margin-bottom:5px}
+  .contab-filtro .field input{padding:9px 10px}
+  .contab-filtro .btn{margin-bottom:1px}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
   .card{background:#fff;border-radius:var(--radio-lg);padding:19px;box-shadow:var(--sombra);border:1px solid var(--borde);transition:transform .2s var(--ease), box-shadow .2s var(--ease)}
   .card:hover{transform:translateY(-3px);box-shadow:var(--sombra-lg)}
@@ -914,6 +919,10 @@
     <symbol id="ico-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v3.6M16 3v3.6"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.3h2M11 16.3h2"/>
     </symbol>
+    <symbol id="ico-contabilidad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5V6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v13"/>
+      <path d="M4 19.5h16M8 15.5v-4M12 15.5V9M16 15.5v-6.5"/>
+    </symbol>
     <symbol id="ico-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none"/>
     </symbol>
@@ -1054,6 +1063,7 @@
       <button data-view="rider" title="Rider del DJ"><span class="ico"><svg><use href="#ico-rider"></use></svg></span><span class="txt">Rider del DJ</span></button>
       <button data-view="cotizaciones" title="Cotizaciones"><span class="ico"><svg><use href="#ico-cotizaciones"></use></svg></span><span class="txt">Cotizaciones</span></button>
       <button data-view="calendario" title="Calendario"><span class="ico"><svg><use href="#ico-calendario"></use></svg></span><span class="txt">Calendario</span></button>
+      <button data-view="contabilidad" title="Contabilidad"><span class="ico"><svg><use href="#ico-contabilidad"></use></svg></span><span class="txt">Contabilidad</span></button>
       <button data-view="nueva" title="Nueva Cotización"><span class="ico"><svg><use href="#ico-nueva"></use></svg></span><span class="txt">Nueva Cotización</span></button>
     </nav>
 
@@ -1134,7 +1144,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Servicio</th><th>Categoría</th><th>Precio (RD$)</th><th></th></tr></thead>
+          <thead><tr><th>Servicio</th><th>Categoría</th><th>Precio venta (RD$)</th><th>Costo (RD$)</th><th>Ganancia</th><th></th></tr></thead>
           <tbody id="productos-body"></tbody>
         </table>
       </div>
@@ -1206,6 +1216,45 @@
         <div class="calendario-leyenda">
           <span><i style="background:var(--azul)"></i> Confirmada por el cliente</span>
           <span><i style="background:var(--verde)"></i> Completada</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTABILIDAD -->
+    <section class="view" id="view-contabilidad">
+      <div class="view-header">
+        <div><h2>Contabilidad</h2><div class="sub">Ganancias, costos de material y gastos generales del negocio</div></div>
+      </div>
+
+      <div class="contab-filtro">
+        <div class="field"><label>Desde</label><input type="date" id="contab-desde"></div>
+        <div class="field"><label>Hasta</label><input type="date" id="contab-hasta"></div>
+        <button type="button" class="btn secondary small" id="btn-contab-todo">Todo el tiempo</button>
+      </div>
+
+      <div class="cards" id="contab-cards"></div>
+
+      <div class="panel-block">
+        <h3>Ganancia por cotización completada</h3>
+        <div class="sub" style="margin:-6px 0 12px">El costo se calcula con el "precio de compra" que tengas guardado en cada producto (Ajustes → Productos) — si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th></tr></thead>
+            <tbody id="contab-ganancias-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <div class="view-header" style="margin-bottom:14px">
+          <div><h3 style="margin:0">Gastos generales del negocio</h3><div class="sub">Material gastable, transporte y otros gastos que no son de una cotización en particular</div></div>
+          <button type="button" class="btn secondary small" id="btn-nuevo-gasto">+ Nuevo gasto</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th><th></th></tr></thead>
+            <tbody id="gastos-body"></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1512,8 +1561,10 @@
     <div class="form-grid">
       <div class="field"><label>Nombre del servicio</label><input type="text" id="p-nombre"></div>
       <div class="field"><label>Categoría</label><input type="text" id="p-categoria" placeholder="Pirotecnia, Sonido, Efectos..."></div>
-      <div class="field"><label>Precio (RD$)</label><input type="number" id="p-precio" step="0.01"></div>
+      <div class="field"><label>Precio de venta (RD$)</label><input type="number" id="p-precio" step="0.01"></div>
+      <div class="field"><label>Precio de compra / costo (RD$)</label><input type="number" id="p-precio-compra" step="0.01" placeholder="0.00"></div>
     </div>
+    <p class="sub" style="margin:2px 2px 0">El precio de compra es lo que te cuesta a ti (material, alquiler, etc.) — no aparece en las cotizaciones ni facturas del cliente, solo se usa internamente en Contabilidad para calcular la ganancia.</p>
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
       <button class="btn secondary" data-close="modal-producto">Cancelar</button>
       <button class="btn" id="btn-guardar-producto">Guardar</button>
@@ -1531,6 +1582,24 @@
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
       <button class="btn secondary" data-close="modal-rider">Cancelar</button>
       <button class="btn" id="btn-guardar-rider">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GASTO GENERAL -->
+<div class="modal-overlay" id="modal-gasto">
+  <div class="modal">
+    <button class="modal-close" data-close="modal-gasto">&times;</button>
+    <h3 id="modal-gasto-titulo">Nuevo gasto</h3>
+    <div class="form-grid">
+      <div class="field"><label>Fecha</label><input type="date" id="g-fecha"></div>
+      <div class="field"><label>Monto (RD$)</label><input type="number" id="g-monto" step="0.01"></div>
+      <div class="field" style="grid-column:1/-1"><label>Concepto</label><input type="text" id="g-concepto" placeholder="Ej: Pólvora para pirotecnia, gasolina, alquiler de camión..."></div>
+      <div class="field" style="grid-column:1/-1"><label>Categoría</label><input type="text" id="g-categoria" placeholder="Material gastable, transporte, mantenimiento..."></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+      <button class="btn secondary" data-close="modal-gasto">Cancelar</button>
+      <button class="btn" id="btn-guardar-gasto">Guardar</button>
     </div>
   </div>
 </div>
@@ -1617,7 +1686,7 @@ const ORIGINAL_HTML_SOURCE = document.documentElement.outerHTML;
 const LS = {
   clients:'djj_clients', products:'djj_products', quotes:'djj_quotes',
   users:'djj_users', settings:'djj_settings', counter:'djj_counter', showPackages:'djj_show_packages',
-  riderItems:'djj_rider_items'
+  riderItems:'djj_rider_items', gastos:'djj_gastos'
 };
 
 function load(key, fallback){
@@ -1750,6 +1819,7 @@ if(load(LS.quotes,null) === null) save(LS.quotes, []);
 if(load(LS.counter,null) === null) save(LS.counter, 293); // primera cotización = 00293
 if(load(LS.showPackages,null) === null) save(LS.showPackages, DEFAULT_SHOW_PACKAGES);
 if(load(LS.riderItems,null) === null) save(LS.riderItems, DEFAULT_RIDER_ITEMS);
+if(load(LS.gastos,null) === null) save(LS.gastos, []);
 
 /* ---------- Estado en memoria ---------- */
 let clients = load(LS.clients, []);
@@ -1759,6 +1829,7 @@ let users = load(LS.users, []);
 let settings = load(LS.settings, DEFAULT_SETTINGS);
 let showPackages = load(LS.showPackages, DEFAULT_SHOW_PACKAGES);
 let riderItems = load(LS.riderItems, DEFAULT_RIDER_ITEMS);
+let gastos = load(LS.gastos, []);
 
 /* Control de acceso: el usuario Maestro "djjulto" siempre debe poder
    entrar al sistema, incluso en un navegador que ya tenía usuarios
@@ -1848,6 +1919,7 @@ function goToView(name){
   if(name === 'rider') renderRiderCatalogo();
   if(name === 'cotizaciones') renderCotizaciones();
   if(name === 'calendario') renderCalendario();
+  if(name === 'contabilidad') renderContabilidad();
   if(name === 'nueva' && editingQuoteId === null) resetQuoteForm();
   if(name === 'ajustes') renderAjustes();
   cerrarMenuMovil();
@@ -2162,12 +2234,14 @@ function renderProductos(){
       <td>${escapeHtml(p.nombre)}</td>
       <td>${escapeHtml(p.categoria||'-')}</td>
       <td>${money(p.precio)}</td>
+      <td>${money(p.precioCompra||0)}</td>
+      <td style="color:var(--verde);font-weight:700">${money((p.precio||0) - (p.precioCompra||0))}</td>
       <td class="row-actions">
         <button class="btn secondary small" data-action="editar" data-id="${p.id}">Editar</button>
         <button class="btn danger small" data-action="eliminar" data-id="${p.id}">Eliminar</button>
       </td>
     </tr>
-  `).join('') : `<tr class="empty-row"><td colspan="4">No hay productos en el catálogo.</td></tr>`;
+  `).join('') : `<tr class="empty-row"><td colspan="6">No hay productos en el catálogo.</td></tr>`;
 
   body.querySelectorAll('[data-action="editar"]').forEach(b=> b.addEventListener('click', ()=> openEditProducto(b.getAttribute('data-id'))));
   body.querySelectorAll('[data-action="eliminar"]').forEach(b=> b.addEventListener('click', ()=> eliminarProducto(b.getAttribute('data-id'))));
@@ -2178,7 +2252,7 @@ let editingProductId = null;
 document.getElementById('btn-nuevo-producto').addEventListener('click', ()=>{
   editingProductId = null;
   document.getElementById('modal-producto-titulo').textContent = 'Nuevo Producto';
-  ['p-nombre','p-categoria','p-precio'].forEach(id=> document.getElementById(id).value='');
+  ['p-nombre','p-categoria','p-precio','p-precio-compra'].forEach(id=> document.getElementById(id).value='');
   openModal('modal-producto');
 });
 function openEditProducto(id){
@@ -2189,6 +2263,7 @@ function openEditProducto(id){
   document.getElementById('p-nombre').value = p.nombre||'';
   document.getElementById('p-categoria').value = p.categoria||'';
   document.getElementById('p-precio').value = p.precio||0;
+  document.getElementById('p-precio-compra').value = p.precioCompra||0;
   openModal('modal-producto');
 }
 document.getElementById('btn-guardar-producto').addEventListener('click', ()=>{
@@ -2198,6 +2273,7 @@ document.getElementById('btn-guardar-producto').addEventListener('click', ()=>{
     nombre,
     categoria: document.getElementById('p-categoria').value.trim(),
     precio: parseFloat(document.getElementById('p-precio').value)||0,
+    precioCompra: parseFloat(document.getElementById('p-precio-compra').value)||0,
   };
   let productoGuardado;
   if(editingProductId){
@@ -2513,6 +2589,166 @@ document.getElementById('btn-cal-hoy').addEventListener('click', ()=>{
   calendarioMesActual = new Date();
   renderCalendario();
 });
+
+/* =========================================================
+   CONTABILIDAD (ganancias, costos de material y gastos)
+   ========================================================= */
+/* El costo de cada servicio vendido se calcula con el "precio de compra"
+   guardado en el producto correspondiente (Ajustes → Productos). Si un
+   renglón de la cotización no tiene productoId (fue escrito a mano) o el
+   producto ya no existe en el catálogo, su costo se cuenta como RD$0.00
+   — se avisa de esto en la propia pantalla de Contabilidad. */
+function calcularCostoCotizacion(q){
+  return (q.items||[]).reduce((s, it)=>{
+    const prod = products.find(p=>p.id===it.productoId);
+    const costoUnit = prod ? (prod.precioCompra||0) : 0;
+    return s + costoUnit * (it.cantidad||0);
+  }, 0);
+}
+function fechaDentroDelRango(fecha, desde, hasta){
+  if(!fecha) return false;
+  if(desde && fecha < desde) return false;
+  if(hasta && fecha > hasta) return false;
+  return true;
+}
+function renderContabilidad(){
+  const desde = document.getElementById('contab-desde').value;
+  const hasta = document.getElementById('contab-hasta').value;
+  const hayFiltro = !!(desde || hasta);
+
+  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(q.fechaEvento, desde, hasta)));
+  const gastosFiltrados = gastos.filter(g => !hayFiltro || fechaDentroDelRango(g.fecha, desde, hasta));
+
+  const totalVendido = completadas.reduce((s,q)=> s + (q.total||0), 0);
+  const totalCosto = completadas.reduce((s,q)=> s + calcularCostoCotizacion(q), 0);
+  const totalGastos = gastosFiltrados.reduce((s,g)=> s + (g.monto||0), 0);
+  const gananciaNeta = totalVendido - totalCosto - totalGastos;
+
+  document.getElementById('contab-cards').innerHTML = `
+    <div class="card">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--menta-suave)"><span class="card-ico" style="color:var(--verde)"><svg><use href="#ico-dinero"></use></svg></span></span>
+      </div>
+      <div class="card-val">${money(totalVendido)}</div><div class="card-label">Total vendido (completadas)</div>
+    </div>
+    <div class="card">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--durazno-suave)"><span class="card-ico" style="color:var(--amarillo)"><svg><use href="#ico-productos"></use></svg></span></span>
+      </div>
+      <div class="card-val">${money(totalCosto)}</div><div class="card-label">Costo de material/servicios</div>
+    </div>
+    <div class="card">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--terracota-suave)"><span class="card-ico" style="color:var(--rojoestado)"><svg><use href="#ico-equis-circulo"></use></svg></span></span>
+      </div>
+      <div class="card-val">${money(totalGastos)}</div><div class="card-label">Gastos generales</div>
+    </div>
+    <div class="card">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--azul-suave)"><span class="card-ico" style="color:var(--azul)"><svg><use href="#ico-check"></use></svg></span></span>
+      </div>
+      <div class="card-val" style="color:${gananciaNeta >= 0 ? 'var(--verde)' : 'var(--rojo)'}">${money(gananciaNeta)}</div><div class="card-label">Ganancia neta</div>
+    </div>
+  `;
+
+  const bodyGan = document.getElementById('contab-ganancias-body');
+  bodyGan.innerHTML = completadas.length ? completadas.map(q=>{
+    const costo = calcularCostoCotizacion(q);
+    const ganancia = (q.total||0) - costo;
+    return `
+      <tr>
+        <td>#${pad5(q.numero)}</td>
+        <td>${escapeHtml(q.clienteNombre||'')}</td>
+        <td>${q.fechaEvento||'-'}</td>
+        <td>${money(q.total)}</td>
+        <td>${money(costo)}</td>
+        <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}</td>
+      </tr>
+    `;
+  }).join('') : `<tr class="empty-row"><td colspan="6">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
+
+  renderGastos(gastosFiltrados);
+}
+document.getElementById('contab-desde').addEventListener('change', renderContabilidad);
+document.getElementById('contab-hasta').addEventListener('change', renderContabilidad);
+document.getElementById('btn-contab-todo').addEventListener('click', ()=>{
+  document.getElementById('contab-desde').value = '';
+  document.getElementById('contab-hasta').value = '';
+  renderContabilidad();
+});
+
+/* ---------- Gastos generales del negocio ---------- */
+function renderGastos(listaFiltrada){
+  const lista = listaFiltrada || gastos;
+  const body = document.getElementById('gastos-body');
+  const ordenada = [...lista].sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
+  body.innerHTML = ordenada.length ? ordenada.map(g=>`
+    <tr data-id="${g.id}">
+      <td>${g.fecha||'-'}</td>
+      <td>${escapeHtml(g.concepto||'')}</td>
+      <td>${escapeHtml(g.categoria||'-')}</td>
+      <td>${money(g.monto)}</td>
+      <td class="row-actions">
+        <button class="btn secondary small" data-action="editar" data-id="${g.id}">Editar</button>
+        <button class="btn danger small" data-action="eliminar" data-id="${g.id}">Eliminar</button>
+      </td>
+    </tr>
+  `).join('') : `<tr class="empty-row"><td colspan="5">No hay gastos registrados en este rango.</td></tr>`;
+  body.querySelectorAll('[data-action="editar"]').forEach(b=> b.addEventListener('click', ()=> openEditGasto(b.getAttribute('data-id'))));
+  body.querySelectorAll('[data-action="eliminar"]').forEach(b=> b.addEventListener('click', ()=> eliminarGasto(b.getAttribute('data-id'))));
+}
+let editingGastoId = null;
+document.getElementById('btn-nuevo-gasto').addEventListener('click', ()=>{
+  editingGastoId = null;
+  document.getElementById('modal-gasto-titulo').textContent = 'Nuevo gasto';
+  document.getElementById('g-fecha').value = formatoFechaISO(new Date());
+  document.getElementById('g-monto').value = '';
+  document.getElementById('g-concepto').value = '';
+  document.getElementById('g-categoria').value = '';
+  openModal('modal-gasto');
+});
+function openEditGasto(id){
+  const g = gastos.find(x=>x.id===id);
+  if(!g) return;
+  editingGastoId = id;
+  document.getElementById('modal-gasto-titulo').textContent = 'Editar gasto';
+  document.getElementById('g-fecha').value = g.fecha||'';
+  document.getElementById('g-monto').value = g.monto||0;
+  document.getElementById('g-concepto').value = g.concepto||'';
+  document.getElementById('g-categoria').value = g.categoria||'';
+  openModal('modal-gasto');
+}
+document.getElementById('btn-guardar-gasto').addEventListener('click', ()=>{
+  const fecha = document.getElementById('g-fecha').value;
+  const concepto = document.getElementById('g-concepto').value.trim();
+  const monto = parseFloat(document.getElementById('g-monto').value)||0;
+  if(!fecha){ toast('Escribe la fecha del gasto'); return; }
+  if(!concepto){ toast('Escribe el concepto del gasto'); return; }
+  if(monto <= 0){ toast('El monto debe ser mayor a cero'); return; }
+  const data = { fecha, concepto, categoria: document.getElementById('g-categoria').value.trim(), monto };
+  let gastoGuardado;
+  if(editingGastoId){
+    gastoGuardado = gastos.find(x=>x.id===editingGastoId);
+    Object.assign(gastoGuardado, data);
+  }else{
+    gastoGuardado = {id:uid(), ...data};
+    gastos.push(gastoGuardado);
+  }
+  save(LS.gastos, gastos);
+  enviarGastoASheets(gastoGuardado, 'guardar');
+  closeModal('modal-gasto');
+  renderContabilidad();
+  toast('Gasto guardado');
+});
+function eliminarGasto(id){
+  if(!confirm('¿Eliminar este gasto?')) return;
+  const item = gastos.find(g=>g.id===id);
+  gastos = gastos.filter(g=>g.id!==id);
+  save(LS.gastos, gastos);
+  if(item) enviarGastoASheets(item, 'eliminar');
+  renderContabilidad();
+  toast('Gasto eliminado');
+}
 
 function eliminarCotizacion(id){
   if(!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.')) return;
@@ -3594,6 +3830,19 @@ async function enviarRiderItemASheets(item, accion){
   }
 }
 
+/* Envía un gasto general del negocio a la hoja "Gastos". Misma idea que
+   enviarProductoASheets: en ambas direcciones. */
+async function enviarGastoASheets(gasto, accion){
+  if(!settings.sheetsUrl || !settings.sheetsEnabled) return;
+  try{
+    await sheetsPostViaForm({ entidad: 'gasto', accion: accion, datos: gasto });
+    posponerProximaRecargaSheets();
+  }catch(err){
+    console.error('No se pudo enviar el gasto a Google Sheets:', err);
+    actualizarEstadoSheetsUI('⚠️ No se pudo sincronizar el último cambio con Google Sheets (revisa tu conexión o la URL).', 'error');
+  }
+}
+
 /* Envía un paquete de show (Básico/VIP/The Show, con su lista de
    servicios) a la hoja "Paquetes de Show". Se identifica por "key" en vez
    de "id" (son un conjunto fijo de 3), y sus servicios viajan como JSON en
@@ -4007,16 +4256,16 @@ async function enviarTodoASheets(){
   settings.sheetsUrl = url;
 
   const btn = document.getElementById('btn-enviar-todo-sheets');
-  const total = clients.length + products.length + showPackages.length + riderItems.length + quotes.length;
-  if(total === 0){ toast('No hay clientes, productos, paquetes, rider ni cotizaciones que enviar'); return; }
-  if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show, ${riderItems.length} requisito(s) de rider y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
+  const total = clients.length + products.length + showPackages.length + riderItems.length + gastos.length + quotes.length;
+  if(total === 0){ toast('No hay clientes, productos, paquetes, rider, gastos ni cotizaciones que enviar'); return; }
+  if(!confirm(`Se van a enviar ${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show, ${riderItems.length} requisito(s) de rider, ${gastos.length} gasto(s) y ${quotes.length} cotización(es) existentes a la hoja de Google Sheets. Puede tomar unos segundos. ¿Continuar?`)) return;
 
   btn.disabled = true;
   // Se aparta la próxima recarga automática mientras dura este envío
   // (puede tomar varios segundos): así la recarga periódica no reemplaza
   // a mitad de camino lo que ya se envió por lo que todavía falta.
   posponerProximaRecargaSheets();
-  let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okPaquetes = 0, falloPaquetes = 0, okRider = 0, falloRider = 0, okCotizaciones = 0, falloCotizaciones = 0;
+  let hecho = 0, okClientes = 0, falloClientes = 0, okProductos = 0, falloProductos = 0, okPaquetes = 0, falloPaquetes = 0, okRider = 0, falloRider = 0, okGastos = 0, falloGastos = 0, okCotizaciones = 0, falloCotizaciones = 0;
 
   for(const c of clients){
     hecho++;
@@ -4042,6 +4291,12 @@ async function enviarTodoASheets(){
     try{ await sheetsPostViaForm({ entidad:'rider', accion:'guardar', datos:r }); okRider++; }
     catch(err){ falloRider++; console.error('Error enviando requisito de rider existente:', r.nombre, err); }
   }
+  for(const g of gastos){
+    hecho++;
+    actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
+    try{ await sheetsPostViaForm({ entidad:'gasto', accion:'guardar', datos:g }); okGastos++; }
+    catch(err){ falloGastos++; console.error('Error enviando gasto existente:', g.concepto, err); }
+  }
   for(const q of quotes){
     hecho++;
     actualizarEstadoSheetsUI(`Enviando datos existentes… (${hecho}/${total})`);
@@ -4051,9 +4306,9 @@ async function enviarTodoASheets(){
 
   btn.disabled = false;
   posponerProximaRecargaSheets();
-  const hayFallos = falloClientes || falloProductos || falloPaquetes || falloRider || falloCotizaciones;
-  const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s), ${okPaquetes} paquete(s) de show, ${okRider} requisito(s) de rider y ${okCotizaciones} cotización(es).` +
-    (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s), ${falloPaquetes} paquete(s), ${falloRider} rider y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
+  const hayFallos = falloClientes || falloProductos || falloPaquetes || falloRider || falloGastos || falloCotizaciones;
+  const resumen = `Enviados ${okClientes} cliente(s), ${okProductos} producto(s), ${okPaquetes} paquete(s) de show, ${okRider} requisito(s) de rider, ${okGastos} gasto(s) y ${okCotizaciones} cotización(es).` +
+    (hayFallos ? ` Fallaron ${falloClientes} cliente(s), ${falloProductos} producto(s), ${falloPaquetes} paquete(s), ${falloRider} rider, ${falloGastos} gasto(s) y ${falloCotizaciones} cotización(es) — revisa tu conexión e inténtalo de nuevo.` : '');
   actualizarEstadoSheetsUI((hayFallos ? '⚠️ ' : '🟢 ') + resumen, hayFallos ? 'error' : 'ok');
   toast(resumen);
 }
@@ -4083,20 +4338,22 @@ document.getElementById('btn-enviar-todo-sheets').addEventListener('click', envi
 async function descargarYReemplazarTodoDesdeSheets(silencioso){
   if(!settings.sheetsUrl) return {ok:false};
   try{
-    const [datosClientes, datosProductos, datosPaquetes, datosRider, datosCotizaciones] = await Promise.all([
+    const [datosClientes, datosProductos, datosPaquetes, datosRider, datosGastos, datosCotizaciones] = await Promise.all([
       sheetsGetJSONP('clientes'),
       sheetsGetJSONP('productos'),
       sheetsGetJSONP('paquetes'),
       sheetsGetJSONP('rider'),
+      sheetsGetJSONP('gastos'),
       sheetsGetJSONP('cotizaciones'),
     ]);
     if(!datosClientes || !Array.isArray(datosClientes.clientes)) throw new Error('Respuesta inesperada al traer clientes');
     if(!datosProductos || !Array.isArray(datosProductos.productos)) throw new Error('Respuesta inesperada al traer productos');
     if(!datosPaquetes || !Array.isArray(datosPaquetes.paquetes)) throw new Error('Respuesta inesperada al traer paquetes');
     if(!datosRider || !Array.isArray(datosRider.rider)) throw new Error('Respuesta inesperada al traer el rider del DJ');
+    if(!datosGastos || !Array.isArray(datosGastos.gastos)) throw new Error('Respuesta inesperada al traer los gastos');
     if(!datosCotizaciones || !Array.isArray(datosCotizaciones.cotizaciones)) throw new Error('Respuesta inesperada al traer cotizaciones');
 
-    // Las cuatro descargas salieron bien: recién ahora se reemplaza lo local.
+    // Las descargas salieron bien: recién ahora se reemplaza lo local.
     clients = datosClientes.clientes.map(r => ({
       id: String(r.id||'').trim() || uid(),
       nombre: r.nombre||'', telefono: r.telefono||'', rnc: r.rnc||'',
@@ -4105,7 +4362,8 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
 
     products = datosProductos.productos.map(r => ({
       id: String(r.id||'').trim() || uid(),
-      nombre: r.nombre||'', categoria: r.categoria||'', precio: Number(r.precio)||0, _deSheets:true,
+      nombre: r.nombre||'', categoria: r.categoria||'', precio: Number(r.precio)||0,
+      precioCompra: Number(r.precioCompra)||0, _deSheets:true,
     })).filter(p => p.nombre);
 
     showPackages = datosPaquetes.paquetes
@@ -4117,6 +4375,12 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
       id: String(r.id||'').trim() || uid(), nombre: r.nombre||'', _deSheets:true,
     })).filter(r => r.nombre);
 
+    gastos = datosGastos.gastos.map(r => ({
+      id: String(r.id||'').trim() || uid(),
+      fecha: r.fecha||'', concepto: r.concepto||'', categoria: r.categoria||'',
+      monto: Number(r.monto)||0, _deSheets:true,
+    })).filter(g => g.concepto);
+
     quotes = datosCotizaciones.cotizaciones
       .map(cotizacionDesdeFilaRemota)
       .filter(q => q.id)
@@ -4126,6 +4390,7 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     save(LS.products, products);
     save(LS.showPackages, showPackages);
     save(LS.riderItems, riderItems);
+    save(LS.gastos, gastos);
     save(LS.quotes, quotes);
     renderClientes();
     renderProductos();
@@ -4136,9 +4401,10 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     refreshProductoSelects();
     renderPanel();
     renderCalendario();
+    if(document.getElementById('view-contabilidad').classList.contains('active')) renderContabilidad();
     if(document.getElementById('view-nueva').classList.contains('active')) renderRiderChecklist();
 
-    const resumen = `${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show, ${riderItems.length} requisito(s) de rider y ${quotes.length} cotización(es) — igual que en la hoja ahora mismo.`;
+    const resumen = `${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show, ${riderItems.length} requisito(s) de rider, ${gastos.length} gasto(s) y ${quotes.length} cotización(es) — igual que en la hoja ahora mismo.`;
     actualizarEstadoSheetsUI('🟢 Al día con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
     if(!silencioso) toast('Actualizado desde Google Sheets: ' + resumen);
     return {ok:true};
@@ -4327,6 +4593,8 @@ function collectAllData(){
     [LS.users]: users,
     [LS.settings]: settings,
     [LS.showPackages]: showPackages,
+    [LS.riderItems]: riderItems,
+    [LS.gastos]: gastos,
     [LS.counter]: load(LS.counter, 293),
   };
 }
@@ -4575,7 +4843,7 @@ document.getElementById('input-importar-datos-json').addEventListener('change', 
       e.target.value = '';
       return;
     }
-    const clavesEsperadas = [LS.clients, LS.products, LS.quotes, LS.users, LS.settings, LS.showPackages, LS.counter];
+    const clavesEsperadas = [LS.clients, LS.products, LS.quotes, LS.users, LS.settings, LS.showPackages, LS.riderItems, LS.gastos, LS.counter];
     const tieneAlgunaClave = clavesEsperadas.some(k => Object.prototype.hasOwnProperty.call(datos, k));
     if(!tieneAlgunaClave){
       toast('El archivo no contiene datos reconocibles de este sistema');
