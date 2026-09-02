@@ -171,6 +171,7 @@
   .contab-filtro .field label{display:block;font-size:11.5px;font-weight:700;color:var(--gris-osc);margin-bottom:5px}
   .contab-filtro .field input{padding:9px 10px}
   .contab-filtro .btn{margin-bottom:1px}
+  .detalle-ganancia-totales{display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--borde);font-weight:700}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
   .card{background:#fff;border-radius:var(--radio-lg);padding:19px;box-shadow:var(--sombra);border:1px solid var(--borde);transition:transform .2s var(--ease), box-shadow .2s var(--ease)}
   .card:hover{transform:translateY(-3px);box-shadow:var(--sombra-lg)}
@@ -1241,7 +1242,7 @@
         <div class="sub" style="margin:-6px 0 12px">Al marcar una cotización como "Completada" se calcula y se guarda la ganancia de ese evento (con los precios de compra vigentes en ese momento), para que quede como registro fijo aunque luego cambies el costo de un producto. Si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más.</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th><th>% Margen</th></tr></thead>
+            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th><th>% Margen</th><th></th></tr></thead>
             <tbody id="contab-ganancias-body"></tbody>
           </table>
         </div>
@@ -1603,6 +1604,22 @@
       <button class="btn secondary" data-close="modal-gasto">Cancelar</button>
       <button class="btn" id="btn-guardar-gasto">Guardar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE DE GANANCIA POR SERVICIO (CONTABILIDAD) -->
+<div class="modal-overlay" id="modal-detalle-ganancia">
+  <div class="modal wide">
+    <button class="modal-close" data-close="modal-detalle-ganancia">&times;</button>
+    <h3 id="detalle-ganancia-titulo">Detalle de ganancia</h3>
+    <p class="sub" style="margin:-6px 0 12px">Por cada servicio de esta cotización (por ejemplo, dentro de un Show VIP: pirotecnia fría, pistola CO2, etc.): lo que se cobró, lo que costó realmente y la ganancia que dejó ese servicio.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Servicio</th><th>Cant.</th><th>Precio venta</th><th>Subtotal venta</th><th>Costo unitario</th><th>Costo total</th><th>Ganancia</th><th>% Margen</th></tr></thead>
+        <tbody id="detalle-ganancia-body"></tbody>
+      </table>
+    </div>
+    <div class="detalle-ganancia-totales" id="detalle-ganancia-totales"></div>
   </div>
 </div>
 
@@ -2622,15 +2639,14 @@ function costoDeCotizacion(q){
 function gananciaDeCotizacion(q){
   return (q.gananciaCalculada != null) ? q.gananciaCalculada : ((q.total||0) - calcularCostoCotizacion(q));
 }
-/* Al completar una cotización, se congela (snapshot) el costo y la
-   ganancia real de ese evento, tomando los precios de compra vigentes en
-   ese momento — así, si luego cambias el costo de un producto, las
-   cotizaciones ya completadas no cambian su ganancia histórica. Se llama
-   cada vez que una cotización queda en estado "Completada" (al cambiar el
-   estado desde la lista/Ver, o al guardarla ya con ese estado). */
-function actualizarGananciaSnapshot(q){
-  if(q.estado !== 'Completada') return;
-  const itemsConCosto = (q.items||[]).map(it=>{
+/* Desglose de ganancia EN VIVO por cada servicio/producto de la cotización:
+   para cada renglón (por ejemplo, dentro del Show VIP: pirotecnia fría,
+   pistola CO2, etc.) toma su precio de venta (lo que ya tiene guardado el
+   renglón) y le resta su precio de compra/costo real (guardado en el
+   producto, Ajustes → Productos) para saber la ganancia de ESE servicio
+   en particular, usando los costos ACTUALES del catálogo. */
+function calcularDetalleItemsEnVivo(q){
+  return (q.items||[]).map(it=>{
     const prod = products.find(p=>p.id===it.productoId);
     const costoUnitario = prod ? (prod.precioCompra||0) : 0;
     const cantidad = it.cantidad||0;
@@ -2640,6 +2656,26 @@ function actualizarGananciaSnapshot(q){
     const margenItem = subtotal ? (gananciaItem / subtotal * 100) : 0;
     return { ...it, costoUnitario, costoTotal, gananciaItem, margenItem };
   });
+}
+/* Desglose de ganancia POR ITEM para mostrar en pantalla: si la cotización
+   ya tiene el snapshot congelado (porque llegó a estar "Completada"), usa
+   ese desglose guardado (histórico, con los costos de ese momento); si no,
+   lo calcula en vivo con los costos actuales del catálogo. */
+function detalleItemsGanancia(q){
+  if(q.itemsConCosto && q.itemsConCosto.length) return q.itemsConCosto;
+  return calcularDetalleItemsEnVivo(q);
+}
+/* Al completar una cotización, se congela (snapshot) el costo y la
+   ganancia real de ese evento (item por item), tomando los precios de
+   compra vigentes en ese momento — así, si luego cambias el costo de un
+   producto, las cotizaciones ya completadas no cambian su ganancia
+   histórica. Se llama cada vez que una cotización queda en estado
+   "Completada" (al cambiar el estado desde la lista/Ver, o al guardarla ya
+   con ese estado) — siempre recalcula desde cero con los costos vigentes
+   en ese momento, nunca reutiliza un snapshot anterior. */
+function actualizarGananciaSnapshot(q){
+  if(q.estado !== 'Completada') return;
+  const itemsConCosto = calcularDetalleItemsEnVivo(q);
   const costoCalculado = itemsConCosto.reduce((s, it)=> s + it.costoTotal, 0);
   const gananciaCalculada = (q.total||0) - costoCalculado;
   const margenCalculado = q.total ? (gananciaCalculada / q.total * 100) : 0;
@@ -2716,11 +2752,42 @@ function renderContabilidad(){
         <td>${money(costo)}</td>
         <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}</td>
         <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
+        <td><button type="button" class="btn secondary small" data-action="detalle-ganancia" data-id="${q.id}">Detalle</button></td>
       </tr>
     `;
-  }).join('') : `<tr class="empty-row"><td colspan="7">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
+  }).join('') : `<tr class="empty-row"><td colspan="8">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
+  bodyGan.querySelectorAll('[data-action="detalle-ganancia"]').forEach(b=> b.addEventListener('click', ()=> abrirDetalleGanancia(b.getAttribute('data-id'))));
 
   renderGastos(gastosFiltrados);
+}
+/* ---------- Detalle de ganancia por servicio, de una cotización ---------- */
+function abrirDetalleGanancia(id){
+  const q = quotes.find(x=>x.id===id);
+  if(!q) return;
+  const detalle = detalleItemsGanancia(q);
+  document.getElementById('detalle-ganancia-titulo').textContent = `Detalle de ganancia — Cotización #${pad5(q.numero)} (${q.clienteNombre||''})`;
+  const body = document.getElementById('detalle-ganancia-body');
+  body.innerHTML = detalle.length ? detalle.map(it=>`
+    <tr>
+      <td>${escapeHtml(it.descripcion||'-')}</td>
+      <td>${it.cantidad||0}</td>
+      <td>${money(it.precio||0)}</td>
+      <td>${money(it.subtotal||0)}</td>
+      <td>${money(it.costoUnitario||0)}</td>
+      <td>${money(it.costoTotal||0)}</td>
+      <td style="color:${(it.gananciaItem||0) >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(it.gananciaItem||0)}</td>
+      <td style="color:${(it.margenItem||0) >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${(it.margenItem||0).toFixed(1)}%</td>
+    </tr>
+  `).join('') : `<tr class="empty-row"><td colspan="8">Esta cotización no tiene servicios.</td></tr>`;
+  const costo = costoDeCotizacion(q);
+  const ganancia = gananciaDeCotizacion(q);
+  const margen = q.total ? (ganancia / q.total * 100) : 0;
+  document.getElementById('detalle-ganancia-totales').innerHTML = `
+    <span>Total cobrado: ${money(q.total)}</span>
+    <span>Costo real: ${money(costo)}</span>
+    <span style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'}">Ganancia: ${money(ganancia)} (${margen.toFixed(1)}%)</span>
+  `;
+  openModal('modal-detalle-ganancia');
 }
 /* ---------- Exportar Contabilidad a Excel (.xlsx) ---------- */
 function exportarContabilidadExcel(){
@@ -2763,6 +2830,18 @@ function exportarContabilidadExcel(){
     }),
   ];
 
+  // Detalle por servicio (item por item) de cada cotización completada —
+  // por ejemplo, dentro del Show VIP: pirotecnia fría, pistola CO2, etc.,
+  // cada uno con su propio precio de venta, costo real y ganancia.
+  const hojaDetalleItems = [
+    ['No. cotización', 'Cliente', 'Servicio', 'Cantidad', 'Precio venta', 'Subtotal venta', 'Costo unitario', 'Costo total', 'Ganancia', '% Margen'],
+    ...completadas.flatMap(q => detalleItemsGanancia(q).map(it => [
+      pad5(q.numero), q.clienteNombre||'', it.descripcion||'-', it.cantidad||0,
+      it.precio||0, it.subtotal||0, it.costoUnitario||0, it.costoTotal||0,
+      it.gananciaItem||0, Number((it.margenItem||0).toFixed(1)),
+    ])),
+  ];
+
   const hojaGastos = [
     ['Fecha', 'Concepto', 'Categoría', 'Monto'],
     ...[...gastosFiltrados].sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||'')).map(g=> [g.fecha||'', g.concepto||'', g.categoria||'', g.monto||0]),
@@ -2771,6 +2850,7 @@ function exportarContabilidadExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaResumen), 'Resumen');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaGanancias), 'Ganancias por cotizacion');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaDetalleItems), 'Detalle por servicio');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaGastos), 'Gastos');
 
   const nombreArchivo = `Contabilidad-DJJulto-${formatoFechaISO(new Date())}.xlsx`;
