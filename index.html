@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     /* Paleta "negro, rojo y pasteles": base neutra oscura con acentos rojos
@@ -1144,7 +1145,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Servicio</th><th>Categoría</th><th>Precio venta (RD$)</th><th>Costo (RD$)</th><th>Ganancia</th><th></th></tr></thead>
+          <thead><tr><th>Servicio</th><th>Categoría</th><th>Precio venta (RD$)</th><th>Costo (RD$)</th><th>Ganancia</th><th>% Ganancia</th><th></th></tr></thead>
           <tbody id="productos-body"></tbody>
         </table>
       </div>
@@ -1224,6 +1225,7 @@
     <section class="view" id="view-contabilidad">
       <div class="view-header">
         <div><h2>Contabilidad</h2><div class="sub">Ganancias, costos de material y gastos generales del negocio</div></div>
+        <button type="button" class="btn secondary" id="btn-contab-excel">Exportar a Excel</button>
       </div>
 
       <div class="contab-filtro">
@@ -1236,10 +1238,10 @@
 
       <div class="panel-block">
         <h3>Ganancia por cotización completada</h3>
-        <div class="sub" style="margin:-6px 0 12px">El costo se calcula con el "precio de compra" que tengas guardado en cada producto (Ajustes → Productos) — si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más.</div>
+        <div class="sub" style="margin:-6px 0 12px">Al marcar una cotización como "Completada" se calcula y se guarda la ganancia de ese evento (con los precios de compra vigentes en ese momento), para que quede como registro fijo aunque luego cambies el costo de un producto. Si un servicio no tiene precio de compra guardado, su costo se cuenta como RD$0.00 y la ganancia mostrada queda de más.</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th></tr></thead>
+            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha evento</th><th>Total cobrado</th><th>Costo estimado</th><th>Ganancia</th><th>% Margen</th></tr></thead>
             <tbody id="contab-ganancias-body"></tbody>
           </table>
         </div>
@@ -2097,6 +2099,7 @@ function updateQuoteEstado(id, estado){
   const q = quotes.find(x=>x.id===id);
   if(!q) return;
   q.estado = estado;
+  actualizarGananciaSnapshot(q);
   save(LS.quotes, quotes);
   renderPanel(); renderCotizaciones(); renderCalendario();
   if(document.getElementById('modal-historial').classList.contains('open')) renderHistorialBody();
@@ -2229,19 +2232,24 @@ function renderProductos(){
   const term = (document.getElementById('buscar-producto').value||'').toLowerCase();
   const list = products.filter(p=> !term || p.nombre.toLowerCase().includes(term));
   const body = document.getElementById('productos-body');
-  body.innerHTML = list.length ? list.map(p=>`
+  body.innerHTML = list.length ? list.map(p=>{
+    const ganancia = (p.precio||0) - (p.precioCompra||0);
+    const margen = p.precio ? (ganancia / p.precio * 100) : 0;
+    return `
     <tr data-id="${p.id}">
       <td>${escapeHtml(p.nombre)}</td>
       <td>${escapeHtml(p.categoria||'-')}</td>
       <td>${money(p.precio)}</td>
       <td>${money(p.precioCompra||0)}</td>
-      <td style="color:var(--verde);font-weight:700">${money((p.precio||0) - (p.precioCompra||0))}</td>
+      <td style="color:var(--verde);font-weight:700">${money(ganancia)}</td>
+      <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
       <td class="row-actions">
         <button class="btn secondary small" data-action="editar" data-id="${p.id}">Editar</button>
         <button class="btn danger small" data-action="eliminar" data-id="${p.id}">Eliminar</button>
       </td>
     </tr>
-  `).join('') : `<tr class="empty-row"><td colspan="6">No hay productos en el catálogo.</td></tr>`;
+  `;
+  }).join('') : `<tr class="empty-row"><td colspan="7">No hay productos en el catálogo.</td></tr>`;
 
   body.querySelectorAll('[data-action="editar"]').forEach(b=> b.addEventListener('click', ()=> openEditProducto(b.getAttribute('data-id'))));
   body.querySelectorAll('[data-action="eliminar"]').forEach(b=> b.addEventListener('click', ()=> eliminarProducto(b.getAttribute('data-id'))));
@@ -2605,6 +2613,42 @@ function calcularCostoCotizacion(q){
     return s + costoUnit * (it.cantidad||0);
   }, 0);
 }
+/* Costo/ganancia "real" de una cotización: si ya se calculó y guardó el
+   snapshot (porque la cotización llegó a estar Completada), se usa ese
+   valor congelado; si no, se calcula en vivo con los costos actuales. */
+function costoDeCotizacion(q){
+  return (q.costoCalculado != null) ? q.costoCalculado : calcularCostoCotizacion(q);
+}
+function gananciaDeCotizacion(q){
+  return (q.gananciaCalculada != null) ? q.gananciaCalculada : ((q.total||0) - calcularCostoCotizacion(q));
+}
+/* Al completar una cotización, se congela (snapshot) el costo y la
+   ganancia real de ese evento, tomando los precios de compra vigentes en
+   ese momento — así, si luego cambias el costo de un producto, las
+   cotizaciones ya completadas no cambian su ganancia histórica. Se llama
+   cada vez que una cotización queda en estado "Completada" (al cambiar el
+   estado desde la lista/Ver, o al guardarla ya con ese estado). */
+function actualizarGananciaSnapshot(q){
+  if(q.estado !== 'Completada') return;
+  const itemsConCosto = (q.items||[]).map(it=>{
+    const prod = products.find(p=>p.id===it.productoId);
+    const costoUnitario = prod ? (prod.precioCompra||0) : 0;
+    const cantidad = it.cantidad||0;
+    const costoTotal = costoUnitario * cantidad;
+    const subtotal = it.subtotal||0;
+    const gananciaItem = subtotal - costoTotal;
+    const margenItem = subtotal ? (gananciaItem / subtotal * 100) : 0;
+    return { ...it, costoUnitario, costoTotal, gananciaItem, margenItem };
+  });
+  const costoCalculado = itemsConCosto.reduce((s, it)=> s + it.costoTotal, 0);
+  const gananciaCalculada = (q.total||0) - costoCalculado;
+  const margenCalculado = q.total ? (gananciaCalculada / q.total * 100) : 0;
+  q.itemsConCosto = itemsConCosto;
+  q.costoCalculado = costoCalculado;
+  q.gananciaCalculada = gananciaCalculada;
+  q.margenCalculado = margenCalculado;
+  q.gananciaFecha = new Date().toISOString();
+}
 function fechaDentroDelRango(fecha, desde, hasta){
   if(!fecha) return false;
   if(desde && fecha < desde) return false;
@@ -2620,9 +2664,10 @@ function renderContabilidad(){
   const gastosFiltrados = gastos.filter(g => !hayFiltro || fechaDentroDelRango(g.fecha, desde, hasta));
 
   const totalVendido = completadas.reduce((s,q)=> s + (q.total||0), 0);
-  const totalCosto = completadas.reduce((s,q)=> s + calcularCostoCotizacion(q), 0);
+  const totalCosto = completadas.reduce((s,q)=> s + costoDeCotizacion(q), 0);
   const totalGastos = gastosFiltrados.reduce((s,g)=> s + (g.monto||0), 0);
   const gananciaNeta = totalVendido - totalCosto - totalGastos;
+  const margenNeto = totalVendido ? (gananciaNeta / totalVendido * 100) : 0;
 
   document.getElementById('contab-cards').innerHTML = `
     <div class="card">
@@ -2649,12 +2694,19 @@ function renderContabilidad(){
       </div>
       <div class="card-val" style="color:${gananciaNeta >= 0 ? 'var(--verde)' : 'var(--rojo)'}">${money(gananciaNeta)}</div><div class="card-label">Ganancia neta</div>
     </div>
+    <div class="card">
+      <div class="card-top">
+        <span class="card-ico-wrap" style="background:var(--azul-suave)"><span class="card-ico" style="color:var(--azul)"><svg><use href="#ico-check"></use></svg></span></span>
+      </div>
+      <div class="card-val" style="color:${margenNeto >= 0 ? 'var(--verde)' : 'var(--rojo)'}">${margenNeto.toFixed(1)}%</div><div class="card-label">Margen de ganancia neto</div>
+    </div>
   `;
 
   const bodyGan = document.getElementById('contab-ganancias-body');
   bodyGan.innerHTML = completadas.length ? completadas.map(q=>{
-    const costo = calcularCostoCotizacion(q);
-    const ganancia = (q.total||0) - costo;
+    const costo = costoDeCotizacion(q);
+    const ganancia = gananciaDeCotizacion(q);
+    const margen = q.total ? (ganancia / q.total * 100) : 0;
     return `
       <tr>
         <td>#${pad5(q.numero)}</td>
@@ -2663,12 +2715,69 @@ function renderContabilidad(){
         <td>${money(q.total)}</td>
         <td>${money(costo)}</td>
         <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}</td>
+        <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
       </tr>
     `;
-  }).join('') : `<tr class="empty-row"><td colspan="6">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
+  }).join('') : `<tr class="empty-row"><td colspan="7">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
 
   renderGastos(gastosFiltrados);
 }
+/* ---------- Exportar Contabilidad a Excel (.xlsx) ---------- */
+function exportarContabilidadExcel(){
+  if(typeof XLSX === 'undefined'){
+    toast('No se pudo cargar el generador de Excel — revisa tu conexión a internet e intenta de nuevo');
+    return;
+  }
+  const desde = document.getElementById('contab-desde').value;
+  const hasta = document.getElementById('contab-hasta').value;
+  const hayFiltro = !!(desde || hasta);
+
+  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(q.fechaEvento, desde, hasta)));
+  const gastosFiltrados = gastos.filter(g => !hayFiltro || fechaDentroDelRango(g.fecha, desde, hasta));
+
+  const totalVendido = completadas.reduce((s,q)=> s + (q.total||0), 0);
+  const totalCosto = completadas.reduce((s,q)=> s + costoDeCotizacion(q), 0);
+  const totalGastos = gastosFiltrados.reduce((s,g)=> s + (g.monto||0), 0);
+  const gananciaNeta = totalVendido - totalCosto - totalGastos;
+  const margenNeto = totalVendido ? (gananciaNeta / totalVendido * 100) : 0;
+
+  const hojaResumen = [
+    ['Contabilidad - DJ Julto The Show'],
+    ['Rango de fechas', hayFiltro ? `${desde || 'inicio'} a ${hasta || 'hoy'}` : 'Todo el tiempo'],
+    ['Generado el', new Date().toLocaleString('es-DO')],
+    [],
+    ['Total vendido (cotizaciones completadas)', totalVendido],
+    ['Costo de material/servicios', totalCosto],
+    ['Gastos generales del negocio', totalGastos],
+    ['Ganancia neta', gananciaNeta],
+    ['Margen de ganancia neto (%)', Number(margenNeto.toFixed(1))],
+  ];
+
+  const hojaGanancias = [
+    ['No.', 'Cliente', 'Fecha evento', 'Total cobrado', 'Costo estimado', 'Ganancia', '% Margen'],
+    ...completadas.map(q=>{
+      const costo = costoDeCotizacion(q);
+      const ganancia = gananciaDeCotizacion(q);
+      const margen = q.total ? Number((ganancia / q.total * 100).toFixed(1)) : 0;
+      return [pad5(q.numero), q.clienteNombre||'', q.fechaEvento||'', q.total||0, costo, ganancia, margen];
+    }),
+  ];
+
+  const hojaGastos = [
+    ['Fecha', 'Concepto', 'Categoría', 'Monto'],
+    ...[...gastosFiltrados].sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||'')).map(g=> [g.fecha||'', g.concepto||'', g.categoria||'', g.monto||0]),
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaResumen), 'Resumen');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaGanancias), 'Ganancias por cotizacion');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hojaGastos), 'Gastos');
+
+  const nombreArchivo = `Contabilidad-DJJulto-${formatoFechaISO(new Date())}.xlsx`;
+  XLSX.writeFile(wb, nombreArchivo);
+  toast('Excel exportado');
+}
+document.getElementById('btn-contab-excel').addEventListener('click', exportarContabilidadExcel);
 document.getElementById('contab-desde').addEventListener('change', renderContabilidad);
 document.getElementById('contab-hasta').addEventListener('change', renderContabilidad);
 document.getElementById('btn-contab-todo').addEventListener('click', ()=>{
@@ -3129,6 +3238,7 @@ document.getElementById('btn-guardar-cotizacion').addEventListener('click', ()=>
       notas: document.getElementById('q-notas').value.trim(),
       riderSeleccionado: [...currentRider],
     });
+    actualizarGananciaSnapshot(q);
     save(LS.quotes, quotes);
     enviarCotizacionASheets(q, 'guardar');
     toast('Cotización actualizada');
@@ -3161,6 +3271,7 @@ document.getElementById('btn-guardar-cotizacion').addEventListener('click', ()=>
       riderSeleccionado: [...currentRider],
       fechaCreacion: Date.now(),
     };
+    actualizarGananciaSnapshot(nueva);
     quotes.push(nueva);
     save(LS.quotes, quotes);
     save(LS.counter, numero+1);
@@ -4117,6 +4228,15 @@ function cotizacionDesdeFilaRemota(r){
     // de la hoja.
     fechaCreacion: num('fechaCreacion') || Date.now(),
     actualizado: r.actualizado||'',
+    // Snapshot de ganancia (ver actualizarGananciaSnapshot): solo existe si
+    // la cotización llegó a estar "Completada" en algún momento. Si no
+    // viene nada de la hoja (r.costoCalculado vacío), se deja sin definir
+    // para que Contabilidad calcule en vivo con los costos actuales.
+    costoCalculado: (r.costoCalculado !== '' && r.costoCalculado != null) ? num('costoCalculado') : undefined,
+    gananciaCalculada: (r.gananciaCalculada !== '' && r.gananciaCalculada != null) ? num('gananciaCalculada') : undefined,
+    margenCalculado: (r.margenCalculado !== '' && r.margenCalculado != null) ? num('margenCalculado') : undefined,
+    gananciaFecha: r.gananciaFecha||'',
+    itemsConCosto: (()=>{ try{ const v = JSON.parse(r.itemsConCostoJSON||'[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } })(),
   };
 }
 
