@@ -601,6 +601,67 @@
   }
 
   /* =========================================================
+     CONTROL DE ACCESO (LOGIN)
+     ========================================================= */
+  .login-overlay{
+    position:fixed;inset:0;z-index:6000;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 100%, rgba(214,40,40,.22), transparent 70%),
+      radial-gradient(ellipse 70% 40% at 15% 0%, rgba(158,27,27,.18), transparent 70%),
+      #0A0A0A;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    transition:opacity .35s ease, visibility .35s ease;
+  }
+  .login-overlay.login-oculto{opacity:0;visibility:hidden;pointer-events:none}
+  .login-card{
+    width:100%;max-width:340px;text-align:center;color:#F3E9E9;
+    background:rgba(255,255,255,.04);border:1px solid rgba(214,40,40,.22);
+    border-radius:20px;padding:36px 30px;backdrop-filter:blur(2px);
+    animation:welcomeApareceArriba .5s ease both;
+  }
+  .login-ico{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:52px;height:52px;border-radius:14px;margin-bottom:14px;
+    background:rgba(214,40,40,.14);color:#F4B6B6;
+  }
+  .login-ico svg{width:28px;height:28px}
+  .login-titulo{margin:0 0 4px;font-size:19px;font-weight:800;letter-spacing:.3px}
+  .login-sub{margin:0 0 22px;font-size:12.5px;color:#C9A8A8}
+  .login-field{text-align:left;margin-bottom:14px}
+  .login-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.3px;color:#C9A8A8;margin-bottom:6px}
+  .login-field input{
+    width:100%;box-sizing:border-box;padding:11px 13px;border-radius:10px;
+    border:1px solid rgba(214,40,40,.3);background:rgba(255,255,255,.06);
+    color:#F3E9E9;font-family:inherit;font-size:14px;outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .login-field input:focus{border-color:var(--rojo);background:rgba(255,255,255,.1)}
+  .login-error{min-height:16px;margin:2px 0 12px;font-size:12px;color:#FF8B8B;font-weight:600}
+  .login-btn{
+    width:100%;padding:12px 0;border:none;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-size:14.5px;font-weight:700;letter-spacing:.3px;color:#fff;
+    background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));
+    box-shadow:0 10px 26px rgba(214,40,40,.35);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .login-btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(214,40,40,.45)}
+  .login-card.login-shake{animation:loginShake .4s ease}
+  @keyframes loginShake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(4px)}
+  }
+  .sidebar-usuario-actual{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:2px;
+    font-size:11.5px;color:var(--rail-texto-tenue);
+  }
+  .sidebar-usuario-actual .ico{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--rojo)}
+  .sidebar-usuario-actual .ico svg{width:100%;height:100%}
+  .sidebar-usuario-actual strong{color:#fff;font-weight:700}
+
+  /* =========================================================
      PANTALLA DE BIENVENIDA ANIMADA
      ========================================================= */
   .welcome-overlay{
@@ -844,6 +905,21 @@
   </defs>
 </svg>
 
+<!-- CONTROL DE ACCESO: pantalla de inicio de sesión. Se muestra antes que
+     cualquier otra cosa (incluida la bienvenida animada) mientras no haya
+     una sesión válida en este navegador. -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card" id="login-card">
+    <span class="login-ico"><svg><use href="#ico-escudo"></use></svg></span>
+    <h1 class="login-titulo">DJ JULTO THE SHOW</h1>
+    <p class="login-sub">Inicia sesión para entrar al sistema</p>
+    <div class="login-field"><label>Usuario</label><input type="text" id="login-usuario" autocomplete="username"></div>
+    <div class="login-field"><label>Contraseña</label><input type="password" id="login-password" autocomplete="current-password"></div>
+    <p class="login-error" id="login-error"></p>
+    <button type="button" class="login-btn" id="btn-login-entrar">Entrar</button>
+  </div>
+</div>
+
 <!-- PANTALLA DE BIENVENIDA ANIMADA: se muestra cada vez que se abre el sistema -->
 <div class="welcome-overlay" id="welcome-overlay">
   <canvas class="welcome-fx" id="welcome-fx"></canvas>
@@ -954,8 +1030,10 @@
     </div>
 
     <div class="sidebar-bottom">
+      <div class="sidebar-usuario-actual txt" title="Sesión iniciada"><span class="ico"><svg><use href="#ico-check"></use></svg></span><span class="txt">Sesión: <strong id="sidebar-usuario-nombre">—</strong></span></div>
       <a id="instagram-link" href="https://instagram.com/djjulto" target="_blank" title="Instagram"><span class="ico"><svg><use href="#ico-instagram"></use></svg></span><span class="txt" id="instagram-txt">@djjulto</span></a>
       <button data-view="ajustes" title="Ajustes"><span class="ico"><svg><use href="#ico-ajustes"></use></svg></span><span class="txt">Ajustes</span></button>
+      <button type="button" id="btn-cerrar-sesion" title="Cerrar sesión"><span class="ico"><svg><use href="#ico-equis-circulo"></use></svg></span><span class="txt">Cerrar sesión</span></button>
     </div>
   </aside>
 
@@ -1443,7 +1521,7 @@
     <h3 id="modal-usuario-titulo">Crear usuario</h3>
     <div class="form-grid">
       <div class="field"><label>Usuario</label><input type="text" id="u-usuario"></div>
-      <div class="field"><label>Contraseña</label><input type="text" id="u-password"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="u-password" autocomplete="new-password"></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
       <button class="btn secondary" data-close="modal-usuario">Cancelar</button>
@@ -1627,7 +1705,7 @@ const DEFAULT_RIDER_ITEMS = [
   {id:uid(), nombre:'Iluminación básica en el área de montaje si el evento es de noche'},
 ];
 
-const DEFAULT_USER = { id:uid(), usuario:'Julto', password:'1234' };
+const DEFAULT_USER = { id:uid(), usuario:'djjulto', password:'1234' };
 
 if(load(LS.products,null) === null) save(LS.products, DEFAULT_PRODUCTS);
 if(load(LS.settings,null) === null) save(LS.settings, DEFAULT_SETTINGS);
@@ -1646,6 +1724,17 @@ let users = load(LS.users, []);
 let settings = load(LS.settings, DEFAULT_SETTINGS);
 let showPackages = load(LS.showPackages, DEFAULT_SHOW_PACKAGES);
 let riderItems = load(LS.riderItems, DEFAULT_RIDER_ITEMS);
+
+/* Control de acceso: el usuario Maestro "djjulto" siempre debe poder
+   entrar al sistema, incluso en un navegador que ya tenía usuarios
+   guardados de antes de que existiera esta protección — por eso se
+   agrega aquí si todavía no está, en vez de solo al sembrar datos
+   nuevos con DEFAULT_USER. Nunca se borran ni se tocan los demás
+   usuarios que ya se hayan creado. */
+if(!users.some(u => (u.usuario||'').toLowerCase() === 'djjulto')){
+  users.push({ id:uid(), usuario:'djjulto', password:'1234' });
+  save(LS.users, users);
+}
 
 /* Migración: quienes ya tenían datos guardados con el nombre antiguo
    "Viáticos" ahora lo ven como "Dietas", tanto en el catálogo de productos
@@ -4096,11 +4185,96 @@ document.getElementById('btn-guardar-usuario').addEventListener('click', ()=>{
 });
 function eliminarUsuario(id){
   if(users.length<=1){ toast('Debe quedar al menos un usuario activo'); return; }
+  const u = users.find(x=>x.id===id);
+  if(u && u.usuario.toLowerCase()==='djjulto'){ toast('El usuario Maestro (djjulto) no se puede eliminar'); return; }
   if(!confirm('¿Eliminar este usuario?')) return;
   users = users.filter(u=>u.id!==id);
   save(LS.users, users);
   renderUsuarios();
   toast('Usuario eliminado');
+}
+
+/* =========================================================
+   CONTROL DE ACCESO (LOGIN)
+   ========================================================= */
+/* Acceso simple con usuario y contraseña guardados en este mismo
+   navegador (junto con clientes, productos, etc. — ver LS.users más
+   arriba). La sesión se guarda en sessionStorage (no en localStorage a
+   propósito): así, al cerrar la pestaña o el navegador, hay que volver a
+   iniciar sesión — pero mientras la pestaña siga abierta, recargar la
+   página no saca al usuario. También hay un botón "Cerrar sesión" para
+   salir manualmente sin cerrar el navegador.
+
+   IMPORTANTE — esto es un candado de uso, no una seguridad a prueba de
+   todo: como el sistema es un solo archivo .html que corre en el propio
+   navegador (sin servidor), alguien con conocimientos técnicos podría
+   ver los usuarios y contraseñas abriendo las herramientas de
+   desarrollador del navegador. Sirve para que no cualquiera que abra el
+   archivo entre a cotizar o vea los datos del negocio "por accidente",
+   no para proteger información realmente sensible.
+
+   Nota: los usuarios NO se sincronizan por Google Sheets (a diferencia
+   de clientes/cotizaciones) — viven solo en el navegador de cada
+   computadora. Si el sistema se usa en varias computadoras, hay que
+   crear los mismos usuarios en cada una (o usar "Respaldo y compartir
+   datos" en Ajustes para llevar una copia). El usuario Maestro djjulto
+   siempre está disponible en cualquier computadora sin necesidad de
+   configurar nada. */
+const SESION_KEY = 'djj_sesion_usuario';
+let usuarioActual = null;
+
+function intentoDeLogin(){
+  const usuario = document.getElementById('login-usuario').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  if(!usuario || !password){
+    errorEl.textContent = 'Escribe el usuario y la contraseña';
+    sacudirLoginCard();
+    return;
+  }
+  const encontrado = users.find(u => u.usuario.toLowerCase() === usuario.toLowerCase() && u.password === password);
+  if(!encontrado){
+    errorEl.textContent = 'Usuario o contraseña incorrectos';
+    sacudirLoginCard();
+    return;
+  }
+  errorEl.textContent = '';
+  sessionStorage.setItem(SESION_KEY, encontrado.usuario);
+  entrarAlSistemaComo(encontrado.usuario);
+}
+function sacudirLoginCard(){
+  const card = document.getElementById('login-card');
+  card.classList.remove('login-shake');
+  void card.offsetWidth; // fuerza el reinicio de la animación si ya se había disparado
+  card.classList.add('login-shake');
+}
+function entrarAlSistemaComo(usuario){
+  usuarioActual = usuario;
+  const nombreEl = document.getElementById('sidebar-usuario-nombre');
+  if(nombreEl) nombreEl.textContent = usuario;
+  document.getElementById('login-overlay').classList.add('login-oculto');
+}
+function inicializarControlAcceso(){
+  document.getElementById('btn-login-entrar').addEventListener('click', intentoDeLogin);
+  ['login-usuario','login-password'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') intentoDeLogin();
+    });
+  });
+  document.getElementById('btn-cerrar-sesion').addEventListener('click', ()=>{
+    if(!confirm('¿Cerrar la sesión actual?')) return;
+    sessionStorage.removeItem(SESION_KEY);
+    location.reload();
+  });
+
+  const sesionGuardada = sessionStorage.getItem(SESION_KEY);
+  const usuarioValido = sesionGuardada && users.some(u => u.usuario === sesionGuardada);
+  if(usuarioValido){
+    entrarAlSistemaComo(sesionGuardada);
+  }else{
+    if(sesionGuardada) sessionStorage.removeItem(SESION_KEY); // el usuario fue eliminado mientras tanto
+    document.getElementById('login-usuario').focus();
+  }
 }
 
 /* =========================================================
@@ -4622,6 +4796,7 @@ function mostrarDetallePaquete(key){
 }
 
 /* ---------- Inicio ---------- */
+inicializarControlAcceso();
 renderLogo();
 renderPanel();
 resetQuoteForm();
