@@ -2631,10 +2631,30 @@ document.getElementById('btn-cal-hoy').addEventListener('click', ()=>{
    guardado en el producto correspondiente (Ajustes → Productos). Si un
    renglón de la cotización no tiene productoId (fue escrito a mano) o el
    producto ya no existe en el catálogo, su costo se cuenta como RD$0.00
-   — se avisa de esto en la propia pantalla de Contabilidad. */
+   — se avisa de esto en la propia pantalla de Contabilidad.
+
+   Un caso particular: las cotizaciones armadas con un botón de paquete
+   (Show Básico/VIP/The Show) guardan una COPIA de los renglones del
+   paquete tal como estaban en ese momento. Si esa cotización se armó
+   ANTES de terminar de ligar cada servicio del paquete a un producto real
+   del catálogo (Ajustes → Paquetes de Show), sus renglones se quedaron
+   con productoId vacío para siempre, aunque el paquete ya esté bien
+   configurado ahora — arreglar el paquete no corrige las cotizaciones que
+   ya se habían armado con él. Por eso, si no se encuentra el producto por
+   id, se intenta encontrar por su NOMBRE exacto (la descripción del
+   renglón se autocompleta con el nombre del producto al elegirlo), como
+   respaldo para no perder el costo en esos casos. */
+function resolverProductoDeItem(it){
+  let prod = products.find(p=>p.id===it.productoId);
+  if(!prod && it.descripcion){
+    const desc = it.descripcion.trim().toLowerCase();
+    prod = products.find(p=> (p.nombre||'').trim().toLowerCase() === desc);
+  }
+  return prod;
+}
 function calcularCostoCotizacion(q){
   return (q.items||[]).reduce((s, it)=>{
-    const prod = products.find(p=>p.id===it.productoId);
+    const prod = resolverProductoDeItem(it);
     const costoUnit = prod ? (prod.precioCompra||0) : 0;
     return s + costoUnit * (it.cantidad||0);
   }, 0);
@@ -2656,7 +2676,7 @@ function gananciaDeCotizacion(q){
    en particular, usando los costos ACTUALES del catálogo. */
 function calcularDetalleItemsEnVivo(q){
   return (q.items||[]).map(it=>{
-    const prod = products.find(p=>p.id===it.productoId);
+    const prod = resolverProductoDeItem(it);
     const costoUnitario = prod ? (prod.precioCompra||0) : 0;
     const cantidad = it.cantidad||0;
     const costoTotal = costoUnitario * cantidad;
