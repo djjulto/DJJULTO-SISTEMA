@@ -1226,7 +1226,10 @@
     <section class="view" id="view-contabilidad">
       <div class="view-header">
         <div><h2>Contabilidad</h2><div class="sub">Ganancias, costos de material y gastos generales del negocio</div></div>
-        <button type="button" class="btn secondary" id="btn-contab-excel">Exportar a Excel</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn secondary" id="btn-contab-recalcular-todo">↻ Recalcular todas las ganancias</button>
+          <button type="button" class="btn secondary" id="btn-contab-excel">Exportar a Excel</button>
+        </div>
       </div>
 
       <div class="contab-filtro">
@@ -2775,11 +2778,15 @@ function renderContabilidad(){
         <td>${money(costo)}</td>
         <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}${aviso}</td>
         <td style="color:${margen >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${margen.toFixed(1)}%</td>
-        <td><button type="button" class="btn secondary small" data-action="detalle-ganancia" data-id="${q.id}">Detalle</button></td>
+        <td>
+          <button type="button" class="btn secondary small" data-action="detalle-ganancia" data-id="${q.id}">Detalle</button>
+          <button type="button" class="btn secondary small" data-action="recalcular-ganancia" data-id="${q.id}" title="Vuelve a calcular el costo y la ganancia de esta cotización con los precios de compra ACTUALES de cada producto">↻ Recalcular</button>
+        </td>
       </tr>
     `;
   }).join('') : `<tr class="empty-row"><td colspan="8">No hay cotizaciones completadas en este rango de fechas.</td></tr>`;
   bodyGan.querySelectorAll('[data-action="detalle-ganancia"]').forEach(b=> b.addEventListener('click', ()=> abrirDetalleGanancia(b.getAttribute('data-id'))));
+  bodyGan.querySelectorAll('[data-action="recalcular-ganancia"]').forEach(b=> b.addEventListener('click', ()=> recalcularGananciaCotizacion(b.getAttribute('data-id'))));
 
   renderGastos(gastosFiltrados);
 }
@@ -2815,6 +2822,41 @@ function abrirDetalleGanancia(id){
   `;
   openModal('modal-detalle-ganancia');
 }
+/* La ganancia de una cotización "Completada" queda congelada (snapshot) a
+   propósito, con los precios de compra vigentes en el momento en que se
+   completó — así, si luego cambias el costo de un producto, esa
+   cotización no cambia su ganancia histórica sola. Pero si esa cotización
+   se completó cuando el precio de compra de algún producto todavía no
+   estaba bien cargado (por ejemplo, antes de corregir la sincronización
+   con Google Sheets), su ganancia quedó congelada mal — este botón
+   permite recalcularla a propósito con los costos ACTUALES. */
+function recalcularGananciaCotizacion(id){
+  const q = quotes.find(x=>x.id===id);
+  if(!q) return;
+  actualizarGananciaSnapshot(q);
+  save(LS.quotes, quotes);
+  enviarCotizacionASheets(q, 'guardar');
+  renderContabilidad();
+  toast(`Ganancia recalculada — Cotización #${pad5(q.numero)}`);
+}
+/* Recalcula TODAS las cotizaciones completadas de una sola vez — útil
+   después de corregir datos de costo que afectaban a varias cotizaciones
+   ya completadas (por ejemplo, tras arreglar la sincronización con
+   Google Sheets). Recorre TODAS las completadas, sin importar el filtro
+   de fechas que esté puesto en pantalla en ese momento. */
+function recalcularTodasLasGanancias(){
+  const completadas = quotes.filter(q => q.estado === 'Completada');
+  if(!completadas.length){ toast('No hay cotizaciones completadas para recalcular'); return; }
+  if(!confirm(`Se va a recalcular la ganancia de las ${completadas.length} cotización(es) completada(s), usando los precios de compra ACTUALES de cada producto. ¿Continuar?`)) return;
+  completadas.forEach(q=>{
+    actualizarGananciaSnapshot(q);
+    enviarCotizacionASheets(q, 'guardar');
+  });
+  save(LS.quotes, quotes);
+  renderContabilidad();
+  toast(`Ganancia recalculada en ${completadas.length} cotización(es)`);
+}
+document.getElementById('btn-contab-recalcular-todo').addEventListener('click', recalcularTodasLasGanancias);
 /* ---------- Exportar Contabilidad a Excel (.xlsx) ---------- */
 function exportarContabilidadExcel(){
   if(typeof XLSX === 'undefined'){
