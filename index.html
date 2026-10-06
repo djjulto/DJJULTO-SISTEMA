@@ -581,6 +581,28 @@
   .contact-item strong{font-weight:800;letter-spacing:.2px}
   .contact-ico{font-size:17px}
 
+  /* ---------- PLANES DE SHOW EXPORTABLES (PDF) ----------
+     Contenedor fuera de pantalla: solo existe para que html2canvas lo
+     capture y lo convierta en PDF, igual que el catálogo. */
+  #planes-render{
+    position:fixed;left:-10000px;top:0;width:760px;box-sizing:border-box;
+    background:#141414;font-family:'Poppins',Arial,sans-serif;color:#F0E6E6;padding:46px 50px 42px;
+  }
+  .pp-plan{margin-bottom:26px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:20px 22px 18px}
+  .pp-plan.destacado{border:2px solid var(--rojo);background:rgba(214,40,40,.06)}
+  .pp-plan-head{display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:2px solid var(--rojo);padding-bottom:11px;margin-bottom:6px}
+  .pp-plan-nombre{font-size:17px;font-weight:800;color:#FBEAEA;letter-spacing:.2px}
+  .pp-plan-badge{display:inline-block;margin-left:10px;vertical-align:middle;background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 11px;border-radius:999px}
+  .pp-plan-precio{font-size:17px;font-weight:800;color:#F4B6B6;white-space:nowrap}
+  .pp-table{width:100%;border-collapse:collapse;font-size:11.5px}
+  .pp-table thead th{background:transparent;border-left:none;border-right:none;padding:8px 6px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#F0B6B6;font-weight:700;border-bottom:1px solid rgba(214,40,40,.35)}
+  .pp-table tbody td{padding:9px 6px;border-bottom:1px solid rgba(255,255,255,.07);color:#EDE0E0;vertical-align:top}
+  .pp-table .c{text-align:center}.pp-table .r{text-align:right;white-space:nowrap}
+  .pp-item-nombre{font-weight:700;color:#FBEAEA}
+  .pp-item-detalle{font-size:10px;color:#A88E8E;margin-top:2px;line-height:1.45}
+  .pp-total-row{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:12px;font-size:13px;font-weight:800;color:#fff}
+  .pp-total-row span:last-child{background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));padding:8px 16px;border-radius:8px;font-size:14.5px}
+
   @media print{
     body *{visibility:hidden}
     #doc-render, #doc-render *, #catalog-render, #catalog-render *{visibility:visible}
@@ -881,6 +903,16 @@
   }
   .plan-btn:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(214,40,40,.4)}
 
+  .planes-pdf-cta{margin-top:22px;text-align:center;opacity:0;animation:welcomeApareceArriba .5s ease .3s both}
+  .btn-planes-pdf{
+    display:inline-flex;align-items:center;gap:9px;cursor:pointer;border:none;border-radius:999px;
+    font-family:inherit;font-size:13.5px;font-weight:700;color:#fff;padding:11px 24px;
+    background:linear-gradient(90deg,var(--negro),#3a3a3a);box-shadow:0 10px 22px rgba(0,0,0,.25);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .btn-planes-pdf svg{width:16px;height:16px}
+  .btn-planes-pdf:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(0,0,0,.32)}
+  .btn-planes-pdf:disabled{opacity:.6;cursor:wait;transform:none}
   .planes-combo-cta{
     margin-top:26px;text-align:center;
     opacity:0;animation:welcomeApareceArriba .5s ease .35s both;
@@ -1001,6 +1033,9 @@
     <symbol id="ico-flecha-izq" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
       <path d="M15 5 8 12l7 7"/>
     </symbol>
+    <symbol id="ico-descarga" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -1058,6 +1093,9 @@
       <p class="welcome-planes-sub">Elige el nivel de show para tu evento</p>
       <p class="welcome-planes-nota">Estos precios NO incluyen sonido ni montaje, y aplican solo para eventos en Santiago de los Caballeros &mdash; si el evento es en otro lugar, el precio puede variar.</p>
       <div class="planes-grid" id="planes-grid"></div>
+      <div class="planes-pdf-cta">
+        <button type="button" class="btn-planes-pdf" id="btn-planes-pdf"><svg><use href="#ico-descarga"></use></svg><span>Descargar planes en PDF para el cliente</span></button>
+      </div>
       <div class="planes-combo-cta">
         <p>&iquest;Prefieres elegir cada servicio t&uacute; mismo?</p>
         <button type="button" class="btn-combo-link" id="btn-ir-combo">Arma tu combo &rarr;</button>
@@ -1193,6 +1231,7 @@
     <section class="view" id="view-paquetes">
       <div class="view-header">
         <div><h2>Paquetes de Show</h2><div class="sub">Show Básico, Show VIP y The Show — servicios y precio fijo de cada uno</div></div>
+        <button class="btn secondary" id="btn-planes-pdf-admin">Exportar planes (PDF)</button>
       </div>
       <div class="section-card">
         <p class="sub" style="margin:-6px 0 16px">Define qué servicios y a qué precio fijo incluye cada paquete. Al presionar el botón del show correspondiente en "Nueva Cotización" (o en el acceso rápido de la barra lateral), estos servicios se cargan automáticamente allí, y luego se pueden agregar más si hace falta.</p>
@@ -1728,6 +1767,9 @@
     </div>
   </div>
 </div>
+
+<!-- Contenedor fuera de pantalla para exportar los planes de show a PDF -->
+<div id="planes-render" aria-hidden="true"></div>
 
 <!-- MODAL: CATÁLOGO PDF -->
 <div class="modal-overlay" id="modal-catalogo">
@@ -5475,6 +5517,95 @@ function renderPlanesBienvenida(){
     b.addEventListener('click', () => elegirShowDesdeBienvenida(b.getAttribute('data-elegir-plan')));
   });
 }
+/* ---------- Exportar los planes (Elige tu show) a PDF para el cliente ---------- */
+/* Un solo PDF con los tres planes, cada uno con todos sus servicios:
+   descripción, cantidad, precio unitario, subtotal y el total del paquete.
+   Nunca incluye costos de compra — solo precios de venta. */
+function buildPlanesPdfHTML(){
+  const logoHtml = settings.logo
+    ? `<div class="logo-badge"><img src="${settings.logo}" alt="Logo"></div>`
+    : `<div class="logo-fallback">DJ</div>`;
+
+  const planesHtml = ORDEN_PLANES.map(key => {
+    const pkg = showPackages.find(p => p.key === key) || DEFAULT_SHOW_PACKAGES.find(p => p.key === key);
+    if(!pkg) return '';
+    const items = pkg.items || [];
+    const total = items.reduce((s, it) => s + (it.cantidad || 0) * (it.precio || 0), 0);
+    const destacado = key === 'the_show';
+    return `
+      <div class="pp-plan ${destacado ? 'destacado' : ''}">
+        <div class="pp-plan-head">
+          <div class="pp-plan-nombre">${escapeHtml(pkg.nombre)}${destacado ? '<span class="pp-plan-badge">El más completo</span>' : ''}</div>
+          <div class="pp-plan-precio">${money(total)}</div>
+        </div>
+        <table class="pp-table">
+          <thead><tr><th>Servicio incluido</th><th class="c">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr></thead>
+          <tbody>
+            ${items.map(it => `
+              <tr>
+                <td>
+                  <div class="pp-item-nombre">${iconForProduct({ nombre: it.descripcion })} ${escapeHtml(it.descripcion)}</div>
+                  ${it.detalle ? `<div class="pp-item-detalle">${escapeHtml(it.detalle)}</div>` : ''}
+                </td>
+                <td class="c">${it.cantidad || 0}</td>
+                <td class="r">${money(it.precio)}</td>
+                <td class="r">${money((it.cantidad || 0) * (it.precio || 0))}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="pp-total-row"><span>Total del paquete</span><span>${money(total)}</span></div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="doc-header">
+      <div class="doc-brand">
+        ${logoHtml}
+        <div class="doc-brand-text">
+          <h2>${escapeHtml(settings.nombreComercial||'DJ JULTO THE SHOW')}</h2>
+          <p>${escapeHtml(settings.instagram||'')}</p>
+        </div>
+      </div>
+      <div class="doc-meta-right">
+        <div class="doc-tag">Planes de show</div>
+        <div class="doc-date">Actualizado: ${new Date().toLocaleDateString('es-DO')}</div>
+      </div>
+    </div>
+
+    <p class="catalog-intro">Elige el nivel de show para tu evento. Aquí tienes el detalle completo de lo que incluye cada paquete, con sus cantidades y precios.</p>
+
+    ${planesHtml}
+
+    <div class="q-note">Precios aplicables a eventos en Santiago de los Caballeros — si el evento es en otro lugar, el precio puede variar.</div>
+
+    <div class="contact-band">
+      <div class="contact-item"><span class="contact-ico">📱</span> WhatsApp: <strong>${formatWhatsApp(settings.whatsapp)}</strong></div>
+      <div class="contact-item"><span class="contact-ico">📷</span> Instagram: <strong>${escapeHtml(settings.instagram||'@djjulto')}</strong></div>
+    </div>
+
+    <div class="doc-footer">Precios en pesos dominicanos (RD$), sujetos a cambios sin previo aviso. ITBIS no incluido salvo que se solicite comprobante fiscal.</div>
+  `;
+}
+async function exportarPlanesPDF(btn){
+  const el = document.getElementById('planes-render');
+  const etiqueta = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Generando PDF...'; }
+  try{
+    el.innerHTML = buildPlanesPdfHTML();
+    await nextFrame();
+    await elementToPdfAndSave(el, 'planes-show-djjulto.pdf');
+    toast('PDF de planes descargado');
+  }catch(err){
+    console.error('Error al generar el PDF de planes:', err);
+    toast('Error al generar el PDF');
+  }finally{
+    el.innerHTML = '';
+    if(btn){ btn.disabled = false; btn.innerHTML = etiqueta; }
+  }
+}
+document.getElementById('btn-planes-pdf').addEventListener('click', function(){ exportarPlanesPDF(this); });
+document.getElementById('btn-planes-pdf-admin').addEventListener('click', function(){ exportarPlanesPDF(this); });
+
 function elegirShowDesdeBienvenida(key){
   cerrarBienvenida();
   startQuoteWithPackage(key);
