@@ -5542,9 +5542,10 @@ function buildPlanesPdfHTML(){
           <thead><tr><th>Servicio incluido</th><th class="c">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr></thead>
           <tbody>
             ${items.map(it => {
-              // En el PDF, "Tiempo por hora (DJ)" se muestra simple: solo "Tiempo"
-              // con la nota "Animación básica incluida" (sin el texto largo).
-              const esTiempo = /^\s*tiempo\b/i.test(it.descripcion || '');
+              // Solo en el Show Básico, "Tiempo por hora (DJ)" se muestra simple:
+              // "Tiempo" con la nota "Animación básica incluida". En VIP y The Show
+              // se queda con su nombre y descripción normales.
+              const esTiempo = key === 'basico' && /^\s*tiempo\b/i.test(it.descripcion || '');
               const nombreMostrado = esTiempo ? 'Tiempo' : it.descripcion;
               const detalleMostrado = esTiempo ? 'Animación básica incluida' : it.detalle;
               return `
