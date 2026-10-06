@@ -5541,16 +5541,23 @@ function buildPlanesPdfHTML(){
         <table class="pp-table">
           <thead><tr><th>Servicio incluido</th><th class="c">Cant.</th><th class="r">Precio</th><th class="r">Subtotal</th></tr></thead>
           <tbody>
-            ${items.map(it => `
+            ${items.map(it => {
+              // En el PDF, "Tiempo por hora (DJ)" se muestra simple: solo "Tiempo"
+              // con la nota "Animación básica incluida" (sin el texto largo).
+              const esTiempo = /^\s*tiempo\b/i.test(it.descripcion || '');
+              const nombreMostrado = esTiempo ? 'Tiempo' : it.descripcion;
+              const detalleMostrado = esTiempo ? 'Animación básica incluida' : it.detalle;
+              return `
               <tr>
                 <td>
-                  <div class="pp-item-nombre">${iconForProduct({ nombre: it.descripcion })} ${escapeHtml(it.descripcion)}</div>
-                  ${it.detalle ? `<div class="pp-item-detalle">${escapeHtml(it.detalle)}</div>` : ''}
+                  <div class="pp-item-nombre">${iconForProduct({ nombre: it.descripcion })} ${escapeHtml(nombreMostrado)}</div>
+                  ${detalleMostrado ? `<div class="pp-item-detalle">${escapeHtml(detalleMostrado)}</div>` : ''}
                 </td>
                 <td class="c">${it.cantidad || 0}</td>
                 <td class="r">${money(it.precio)}</td>
                 <td class="r">${money((it.cantidad || 0) * (it.precio || 0))}</td>
-              </tr>`).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
         <div class="pp-total-row"><span>Total del paquete</span><span>${money(total)}</span></div>
