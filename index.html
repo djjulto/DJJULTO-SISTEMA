@@ -2220,7 +2220,7 @@ function rowQuoteHTML(q){
   return `<tr class="fila-${q.estado}" data-id="${q.id}">
     <td>#${pad5(q.numero)}</td>
     <td>${escapeHtml(q.clienteNombre||'')}</td>
-    <td>${q.fechaEvento||'-'}</td>
+    <td>${normalizarFecha(q.fechaEvento)||'-'}</td>
     <td>${money(q.total)}</td>
     <td>
       <select class="estado-select" data-action="estado" data-id="${q.id}">
@@ -2388,7 +2388,7 @@ function renderHistorialBody(){
   body.innerHTML = list.length ? list.map(q=>`
     <tr class="fila-${q.estado}" data-id="${q.id}">
       <td>#${pad5(q.numero)}</td>
-      <td>${q.fechaEvento||'-'}</td>
+      <td>${normalizarFecha(q.fechaEvento)||'-'}</td>
       <td>${escapeHtml(q.nombreShow||'-')}</td>
       <td>${money(q.total)}</td>
       <td>
@@ -2651,7 +2651,7 @@ function filaCotizacionHTML(q){
     <tr class="fila-${q.estado}" data-id="${q.id}">
       <td>#${pad5(q.numero)}</td>
       <td>${escapeHtml(q.clienteNombre||'')}</td>
-      <td>${q.fechaEvento||'-'}</td>
+      <td>${normalizarFecha(q.fechaEvento)||'-'}</td>
       <td>${escapeHtml(q.nombreShow||'-')}</td>
       <td>${money(q.total)}</td>
       <td>
@@ -2722,6 +2722,7 @@ function formatoFechaISO(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function formatoHora12(hhmm){
+  hhmm = normalizarHora(hhmm);
   if(!hhmm) return '';
   const [h, m] = hhmm.split(':').map(Number);
   const periodo = h < 12 ? 'a.m.' : 'p.m.';
@@ -2743,7 +2744,7 @@ function renderCalendario(){
   // y Declinado no comprometen todavía la fecha, así que no se muestran.
   const porFecha = {};
   quotes.filter(q => (q.estado === 'Confirmada' || q.estado === 'Completada') && q.fechaEvento)
-    .forEach(q => { (porFecha[q.fechaEvento] = porFecha[q.fechaEvento] || []).push(q); });
+    .forEach(q => { (porFecha[normalizarFecha(q.fechaEvento)] = porFecha[normalizarFecha(q.fechaEvento)] || []).push(q); });
 
   const hoyStr = formatoFechaISO(new Date());
   const diasSemana = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
@@ -2902,7 +2903,7 @@ function renderContabilidad(){
   const hasta = document.getElementById('contab-hasta').value;
   const hayFiltro = !!(desde || hasta);
 
-  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(q.fechaEvento, desde, hasta)));
+  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(normalizarFecha(q.fechaEvento), desde, hasta)));
   const gastosFiltrados = gastos.filter(g => !hayFiltro || fechaDentroDelRango(g.fecha, desde, hasta));
 
   const totalVendido = completadas.reduce((s,q)=> s + (q.total||0), 0);
@@ -2955,7 +2956,7 @@ function renderContabilidad(){
       <tr>
         <td>#${pad5(q.numero)}</td>
         <td>${escapeHtml(q.clienteNombre||'')}</td>
-        <td>${q.fechaEvento||'-'}</td>
+        <td>${normalizarFecha(q.fechaEvento)||'-'}</td>
         <td>${money(q.total)}</td>
         <td>${money(costo)}</td>
         <td style="color:${ganancia >= 0 ? 'var(--verde)' : 'var(--rojo)'};font-weight:700">${money(ganancia)}${aviso}</td>
@@ -3049,7 +3050,7 @@ function exportarContabilidadExcel(){
   const hasta = document.getElementById('contab-hasta').value;
   const hayFiltro = !!(desde || hasta);
 
-  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(q.fechaEvento, desde, hasta)));
+  const completadas = quotes.filter(q => q.estado === 'Completada' && (!hayFiltro || fechaDentroDelRango(normalizarFecha(q.fechaEvento), desde, hasta)));
   const gastosFiltrados = gastos.filter(g => !hayFiltro || fechaDentroDelRango(g.fecha, desde, hasta));
 
   const totalVendido = completadas.reduce((s,q)=> s + (q.total||0), 0);
@@ -3077,7 +3078,7 @@ function exportarContabilidadExcel(){
       const ganancia = gananciaDeCotizacion(q);
       const margen = q.total ? Number((ganancia / q.total * 100).toFixed(1)) : 0;
       const costoCompleto = cotizacionTieneCostoIncompleto(q) ? 'No (falta precio de compra en algún servicio)' : 'Sí';
-      return [pad5(q.numero), q.clienteNombre||'', q.fechaEvento||'', q.total||0, costo, ganancia, margen, costoCompleto];
+      return [pad5(q.numero), q.clienteNombre||'', normalizarFecha(q.fechaEvento), q.total||0, costo, ganancia, margen, costoCompleto];
     }),
   ];
 
@@ -3446,9 +3447,9 @@ function loadQuoteDataIntoForm(q){
   document.getElementById('q-cliente-rnc').value = q.clienteRnc||'';
   document.getElementById('q-cliente-tipoact').value = q.clienteTipoActividad||'';
   document.getElementById('q-cliente-lugar').value = q.clienteLugar||'';
-  document.getElementById('q-fecha-evento').value = q.fechaEvento||'';
-  document.getElementById('q-hora-evento').value = q.horaEvento||'';
-  document.getElementById('q-hora-fin').value = q.horaFin||'';
+  document.getElementById('q-fecha-evento').value = normalizarFecha(q.fechaEvento);
+  document.getElementById('q-hora-evento').value = normalizarHora(q.horaEvento);
+  document.getElementById('q-hora-fin').value = normalizarHora(q.horaFin);
   document.getElementById('q-lugar-evento').value = q.lugarEvento||'';
   document.getElementById('q-tipo-actividad').value = q.tipoActividad||'';
   document.getElementById('q-nombre-show').value = q.nombreShow||'';
@@ -3690,14 +3691,14 @@ function buildDocHTML(q, esFactura){
 
   // Fecha del evento en formato "calendario" (mes / día / año), si se puede leer.
   const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-  const mFecha = /^(\d{4})-(\d{2})-(\d{2})/.exec(q.fechaEvento || '');
+  const mFecha = /^(\d{4})-(\d{2})-(\d{2})/.exec(normalizarFecha(q.fechaEvento));
   const horaTxt = q.horaEvento ? formatoHora12(q.horaEvento) + (q.horaFin ? ' – ' + formatoHora12(q.horaFin) : '') : '';
   const lugarTxt = q.lugarEvento || q.clienteLugar || '';
   const eventoHtml = `
     ${mFecha ? `<div class="q-fecha">
       <div class="q-fecha-caja"><div class="q-fecha-mes">${MESES[+mFecha[2]-1] || ''}</div><div class="q-fecha-dia">${+mFecha[3]}</div><div class="q-fecha-anio">${mFecha[1]}</div></div>
       <div class="q-fecha-info">${horaTxt ? `<strong>${horaTxt}</strong>` : ''}${q.tipoActividad ? escapeHtml(q.tipoActividad) : ''}</div>
-    </div>` : `<p>${escapeHtml(q.fechaEvento||'-')}${horaTxt ? ' · ' + horaTxt : ''}</p>${q.tipoActividad ? `<p>${escapeHtml(q.tipoActividad)}</p>` : ''}`}
+    </div>` : `<p>${escapeHtml(normalizarFecha(q.fechaEvento)||'-')}${horaTxt ? ' · ' + horaTxt : ''}</p>${q.tipoActividad ? `<p>${escapeHtml(q.tipoActividad)}</p>` : ''}`}
     ${lugarTxt ? `<p>📍 ${escapeHtml(lugarTxt)}</p>` : ''}
   `;
 
@@ -4199,6 +4200,42 @@ function actualizarEstadoSheetsUI(texto, tipo){
    NaN y el valor se pierde (se cuenta como RD$0.00) aunque la celda sí
    tenga el dato. Quita todo lo que no sea dígito, punto o signo menos, y
    ya entonces intenta convertirlo. */
+/* Fechas y horas que llegan de Google Sheets: una celda de fecha vuelve como
+   "2026-11-28T04:00:00.000Z" (formato ISO con zona horaria) y una de hora como
+   "1899-12-30T..." o "21:00:00". Aquí se llevan al formato simple que usa el
+   sistema: fecha "2026-11-28" y hora "21:00". */
+function normalizarFecha(v){
+  if(v == null || v === '') return '';
+  const pad2 = n => String(n).padStart(2,'0');
+  const deDate = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  if(v instanceof Date) return isNaN(v) ? '' : deDate(v);
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  let m = /^(\d{4}-\d{2}-\d{2})T/.exec(s);
+  if(m){
+    const d = new Date(s);
+    return isNaN(d) ? m[1] : deDate(d);
+  }
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  if(m) return `${m[3]}-${pad2(m[2])}-${pad2(m[1])}`;
+  return s;
+}
+function normalizarHora(v){
+  if(v == null || v === '') return '';
+  const pad2 = n => String(n).padStart(2,'0');
+  const s = String(v).trim();
+  let m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
+  if(m) return `${pad2(m[1])}:${m[2]}`;
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){
+    const d = new Date(s);
+    if(!isNaN(d)){
+      const t = Math.round((d.getHours()*60 + d.getMinutes() + d.getSeconds()/60)) % 1440;
+      return `${pad2(Math.floor(t/60))}:${pad2(t%60)}`;
+    }
+  }
+  return s;
+}
+
 function parseNumeroFlexible(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return isNaN(v) ? 0 : v;
@@ -4587,9 +4624,9 @@ function cotizacionDesdeFilaRemota(r){
     clienteRnc: r.clienteRnc||'',
     clienteTipoActividad: r.clienteTipoActividad||'',
     clienteLugar: r.clienteLugar||'',
-    fechaEvento: r.fechaEvento||'',
-    horaEvento: r.horaEvento||'',
-    horaFin: r.horaFin||'',
+    fechaEvento: normalizarFecha(r.fechaEvento),
+    horaEvento: normalizarHora(r.horaEvento),
+    horaFin: normalizarHora(r.horaFin),
     lugarEvento: r.lugarEvento||'',
     tipoActividad: r.tipoActividad||'',
     nombreShow: r.nombreShow||'',
