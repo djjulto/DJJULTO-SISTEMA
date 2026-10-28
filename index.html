@@ -2480,11 +2480,23 @@ document.getElementById('btn-guardar-producto').addEventListener('click', ()=>{
     products.push(productoGuardado);
   }
   save(LS.products, products);
-  enviarProductoASheets(productoGuardado, 'guardar');
+  // Si cambió el precio de venta, los paquetes de show que usan este producto
+  // (Cotizar show rápido, Elige tu show, etc.) se actualizan con el nuevo precio.
+  const paquetesActualizados = sincronizarPreciosPaquetes();
+  if(paquetesActualizados.length){
+    save(LS.showPackages, showPackages);
+    renderPaquetesEditor();
+  }
+  (async ()=>{
+    await enviarProductoASheets(productoGuardado, 'guardar');
+    await enviarPaquetesCambiados(paquetesActualizados);
+  })();
   closeModal('modal-producto');
   renderProductos();
   refreshProductoSelects();
-  toast('Producto guardado');
+  toast(paquetesActualizados.length
+    ? `Producto guardado — precio actualizado también en ${paquetesActualizados.length} paquete(s) de show`
+    : 'Producto guardado');
 });
 function eliminarProducto(id){
   if(!confirm('¿Eliminar este producto del catálogo?')) return;
@@ -2814,6 +2826,32 @@ function resolverProductoDeItem(it){
     prod = products.find(p=> (p.nombre||'').trim().toLowerCase() === desc);
   }
   return prod;
+}
+/* Mantiene los precios de los paquetes de show (Show Básico/VIP/The Show —
+   "Cotizar show rápido", la pantalla "Elige tu show" y su PDF) al día con el
+   PRECIO DE VENTA del producto al que está ligado cada servicio del paquete.
+   Si el precio de un producto cambia, el renglón del paquete toma el nuevo
+   precio. Devuelve los paquetes que cambiaron (para guardarlos/enviarlos).
+   Las cotizaciones ya creadas NO se tocan: conservan el precio que se
+   acordó con el cliente en su momento. */
+function sincronizarPreciosPaquetes(){
+  const cambiados = [];
+  showPackages.forEach(pkg=>{
+    let cambio = false;
+    (pkg.items||[]).forEach(it=>{
+      const prod = resolverProductoDeItem(it);
+      if(!prod) return;
+      const nuevo = Number(prod.precio);
+      if(!isFinite(nuevo)) return;
+      if(Number(it.precio) !== nuevo){ it.precio = nuevo; cambio = true; }
+    });
+    if(cambio) cambiados.push(pkg);
+  });
+  return cambiados;
+}
+async function enviarPaquetesCambiados(paquetes){
+  // De uno en uno: el envío por <form> comparte un solo iframe oculto.
+  for(const pkg of paquetes) await enviarPaqueteASheets(pkg, 'guardar');
 }
 function calcularCostoCotizacion(q){
   return (q.items||[]).reduce((s, it)=>{
@@ -4932,6 +4970,10 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
       .filter(q => q.id)
       .map(q => Object.assign({}, q, {_deSheets:true}));
 
+    // Si el precio de un producto se cambió (p. ej. directo en la hoja), los
+    // paquetes de show toman ese precio; luego se reenvían los que cambiaron.
+    const paquetesAjustados = sincronizarPreciosPaquetes();
+
     save(LS.clients, clients);
     save(LS.products, products);
     save(LS.showPackages, showPackages);
@@ -4953,6 +4995,7 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     const resumen = `${clients.length} cliente(s), ${products.length} producto(s), ${showPackages.length} paquete(s) de show, ${riderItems.length} requisito(s) de rider, ${gastos.length} gasto(s) y ${quotes.length} cotización(es) — igual que en la hoja ahora mismo.`;
     actualizarEstadoSheetsUI('🟢 Al día con Google Sheets — ' + new Date().toLocaleTimeString('es-DO'), 'ok');
     if(!silencioso) toast('Actualizado desde Google Sheets: ' + resumen);
+    if(paquetesAjustados.length) await enviarPaquetesCambiados(paquetesAjustados);
     return {ok:true};
   }catch(err){
     console.error('Error descargando desde Google Sheets:', err);
@@ -5755,6 +5798,7 @@ function renderComboBienvenida(){
 /* ---------- Inicio ---------- */
 inicializarControlAcceso();
 renderLogo();
+if(sincronizarPreciosPaquetes().length) save(LS.showPackages, showPackages);
 renderPanel();
 resetQuoteForm();
 inicializarAutoSave();
