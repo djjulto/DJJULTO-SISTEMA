@@ -4158,6 +4158,7 @@ document.getElementById('btn-guardar-paquetes').addEventListener('click', async 
   });
   showPackages = nuevos;
   save(LS.showPackages, showPackages);
+  __ultimaEdicionPaquetes = 0;
   toast('Paquetes de show guardados');
   // Se envían de uno en uno (no en paralelo): el envío por <form>+iframe
   // oculto comparte un solo iframe, así que mandar varios a la vez
@@ -4325,7 +4326,15 @@ function sheetsGetJSONP(tipo, timeoutMs){
 /* Envía datos a la hoja vía un <form> real hacia un <iframe> oculto
    (sin fetch, sin CORS). No se puede leer la respuesta (por ser de otro
    dominio), así que se asume éxito cuando el iframe termina de cargar. */
-function sheetsPostViaForm(payload, timeoutMs){
+/* Cuenta los envíos a Sheets que están en camino, para que la recarga
+   automática no corra (ni pise nada) mientras un cambio todavía no llegó. */
+let __enviosSheetsEnCurso = 0;
+async function sheetsPostViaForm(payload, timeoutMs){
+  __enviosSheetsEnCurso++;
+  try{ return await sheetsPostViaFormInterno(payload, timeoutMs); }
+  finally{ __enviosSheetsEnCurso--; }
+}
+function sheetsPostViaFormInterno(payload, timeoutMs){
   return new Promise((resolve, reject)=>{
     if(!settings.sheetsUrl){ reject(new Error('No hay URL configurada')); return; }
     if(!__sheetsIframeOculto){
@@ -4919,8 +4928,42 @@ document.getElementById('btn-enviar-todo-sheets').addEventListener('click', envi
    Solo si las CUATRO descargas salen bien se reemplaza lo local — así,
    si por algún motivo no se puede conectar, se sigue mostrando lo último
    que se pudo cargar en vez de dejar el sistema en blanco. */
+/* ¿La persona está en medio de una edición? Mientras lo esté, la recarga
+   automática desde Google Sheets NO reemplaza nada ni vuelve a dibujar las
+   pantallas — si lo hiciera, lo que se está escribiendo/eligiendo (precios,
+   productos en un paquete, una cotización a medio llenar) volvería al
+   estado anterior. Al terminar (guardar, cerrar la ventana o dejar unos
+   segundos sin tocar nada), la siguiente vuelta ya sincroniza normal. */
+let __ultimaEdicion = 0;           // último input/cambio/tecla en la app
+let __ultimaEdicionPaquetes = 0;   // ídem, dentro del editor de paquetes
+['input','change','keydown'].forEach(ev=>{
+  document.addEventListener(ev, e=>{
+    const t = e.target;
+    if(!t || !t.closest || t.closest('.login-overlay, #welcome-overlay')) return;
+    __ultimaEdicion = Date.now();
+    if(t.closest('#paquetes-editor')) __ultimaEdicionPaquetes = Date.now();
+  }, true);
+});
+function usuarioEstaEditando(){
+  const ahora = Date.now();
+  if(document.querySelector('.modal-overlay.open')) return true;
+  const a = document.activeElement;
+  if(a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName) && !a.disabled && !a.closest('.login-overlay, #welcome-overlay')) return true;
+  if(ahora - __ultimaEdicion < 15000) return true;
+  const vNueva = document.getElementById('view-nueva');
+  if(vNueva && vNueva.classList.contains('active')) return true; // cotización a medio llenar
+  const vPaq = document.getElementById('view-paquetes');
+  if(vPaq && vPaq.classList.contains('active') && ahora - __ultimaEdicionPaquetes < 120000) return true;
+  return false;
+}
+function recargaSheetsDebePausarse(){
+  return __enviosSheetsEnCurso > 0 || usuarioEstaEditando();
+}
+
 async function descargarYReemplazarTodoDesdeSheets(silencioso){
   if(!settings.sheetsUrl) return {ok:false};
+  // Recarga automática: si se está editando algo, se salta esta vuelta.
+  if(silencioso && recargaSheetsDebePausarse()) return {ok:false, omitido:true};
   try{
     const [datosClientes, datosProductos, datosPaquetes, datosRider, datosGastos, datosCotizaciones] = await Promise.all([
       sheetsGetJSONP('clientes'),
@@ -4936,6 +4979,10 @@ async function descargarYReemplazarTodoDesdeSheets(silencioso){
     if(!datosRider || !Array.isArray(datosRider.rider)) throw new Error('Respuesta inesperada al traer el rider del DJ');
     if(!datosGastos || !Array.isArray(datosGastos.gastos)) throw new Error('Respuesta inesperada al traer los gastos');
     if(!datosCotizaciones || !Array.isArray(datosCotizaciones.cotizaciones)) throw new Error('Respuesta inesperada al traer cotizaciones');
+
+    // La descarga tarda unos segundos: si en ese tiempo se empezó a editar
+    // algo (o salió un cambio propio), se descarta esta descarga para no pisarlo.
+    if(silencioso && recargaSheetsDebePausarse()) return {ok:false, omitido:true};
 
     // Las descargas salieron bien: recién ahora se reemplaza lo local.
     clients = datosClientes.clientes.map(r => ({
