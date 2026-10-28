@@ -476,8 +476,8 @@
   #doc-render, #catalog-render{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render *, #catalog-render *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render{
-    --d-ink:#2B2433; --d-muted:#7A6F86; --d-line:#E7E0EE; --d-accent:#C8415B;
-    --d-lav:#EFEAFB; --d-blush:#FCE8EE; --d-peach:#FFEFE3; --d-mint:#E2F4E8; --d-sky:#E3EEFB;
+    --d-ink:#2A1C1C; --d-muted:#85706F; --d-line:#F0D3D3; --d-accent:#D62828;
+    --d-lav:#FBDADA; --d-blush:#FBE1E1; --d-peach:#FFEFE3; --d-mint:#E2F4E8; --d-sky:#E3EEFB;
     background:#FFFCFA;width:100%;max-width:840px;margin:0 auto;box-sizing:border-box;
     font-family:'Poppins',Arial,sans-serif;color:var(--d-ink);
     display:flex;align-items:stretch;
@@ -505,50 +505,50 @@
      placa negra de marca, igual que en el catálogo, para que siempre se lea. */
   .q-doc-side{
     width:262px;flex-shrink:0;color:var(--d-ink);
-    background:linear-gradient(170deg,#EAE3FA 0%,#F6E6F0 55%,#FDE9E4 100%);
+    background:linear-gradient(170deg,#F9D3D3 0%,#F7C6C6 50%,#FCE0D6 100%);
     padding:34px 22px 26px;display:flex;flex-direction:column;gap:14px;
     border-right:1px solid var(--d-line);
   }
   .q-side-brandbox{text-align:center;margin-bottom:2px}
-  .q-side-logo{display:flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin:0 auto 11px;background:#141414;border-radius:12px;padding:10px 16px;box-shadow:0 6px 14px -6px rgba(43,36,51,.45)}
+  .q-side-logo{display:flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin:0 auto 11px;background:#141414;border-radius:12px;padding:10px 16px;box-shadow:0 6px 14px -6px rgba(70,20,20,.45)}
   .q-side-logo img{max-width:170px;max-height:54px;object-fit:contain;display:block}
   .q-side-logo .logo-fallback-side{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
   .q-side-brand{font-size:13.5px;font-weight:800;letter-spacing:.4px;color:var(--d-ink)}
   .q-side-tagline{font-size:10px;color:var(--d-accent);font-weight:700;margin-top:2px}
 
-  .q-side-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);border-radius:12px;padding:12px 13px;box-shadow:0 4px 12px -8px rgba(43,36,51,.25)}
+  .q-side-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);border-radius:12px;padding:12px 13px;box-shadow:0 4px 12px -8px rgba(70,20,20,.25)}
   .q-side-card h5{font-size:8.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--d-accent);font-weight:800;margin:0 0 7px}
-  .q-side-card p{font-size:10.6px;color:#4A4156;margin:0 0 3px;line-height:1.5;word-break:break-word}
+  .q-side-card p{font-size:10.6px;color:#4D3A3A;margin:0 0 3px;line-height:1.5;word-break:break-word}
   .q-side-card p strong{color:var(--d-ink);font-size:11.5px}
   .q-side-card p:last-child{margin-bottom:0}
 
   /* Fecha del evento, en grande */
   .q-fecha{display:flex;align-items:center;gap:11px;margin-bottom:9px}
-  .q-fecha-caja{flex:none;width:52px;text-align:center;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 10px -5px rgba(43,36,51,.4);border:1px solid var(--d-line)}
-  .q-fecha-mes{background:linear-gradient(90deg,var(--rojo),#E4577A);color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 0}
+  .q-fecha-caja{flex:none;width:52px;text-align:center;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 10px -5px rgba(70,20,20,.4);border:1px solid var(--d-line)}
+  .q-fecha-mes{background:linear-gradient(90deg,var(--rojo),#E34B4B);color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 0}
   .q-fecha-dia{font-size:22px;font-weight:800;line-height:1.15;color:var(--d-ink);padding:2px 0 0}
   .q-fecha-anio{font-size:8.5px;color:var(--d-muted);font-weight:700;padding-bottom:3px}
-  .q-fecha-info{font-size:10.6px;color:#4A4156;line-height:1.5}
+  .q-fecha-info{font-size:10.6px;color:#4D3A3A;line-height:1.5}
   .q-fecha-info strong{display:block;font-size:11.5px;color:var(--d-ink)}
 
   /* Barra de avance de pago */
-  .q-pago-fila{display:flex;justify-content:space-between;font-size:10.6px;color:#4A4156;margin-bottom:3px}
+  .q-pago-fila{display:flex;justify-content:space-between;font-size:10.6px;color:#4D3A3A;margin-bottom:3px}
   .q-pago-fila strong{color:var(--d-ink)}
-  .q-pago-barra{height:8px;border-radius:999px;background:rgba(43,36,51,.1);overflow:hidden;margin:8px 0 6px}
+  .q-pago-barra{height:8px;border-radius:999px;background:rgba(70,20,20,.1);overflow:hidden;margin:8px 0 6px}
   .q-pago-barra span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7BCB9A,#4CAF6D)}
   .q-pago-pie{font-size:9.5px;color:var(--d-muted);font-weight:600}
 
   .q-rider-lista{margin:0;padding-left:15px}
-  .q-rider-lista li{font-size:10.4px;color:#4A4156;line-height:1.5;margin-bottom:2px}
+  .q-rider-lista li{font-size:10.4px;color:#4D3A3A;line-height:1.5;margin-bottom:2px}
 
   .q-side-spacer{flex:0 0 0}
   /* Ecualizador decorativo (guiño DJ) + agradecimiento */
   .q-eq{display:flex;align-items:flex-end;justify-content:center;gap:5px;flex:1;min-height:46px;max-height:190px}
-  .q-eq i{display:block;width:7px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#E4577A,#C9B6F0);opacity:.85}
+  .q-eq i{display:block;width:7px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#D62828,#F5B3B3);opacity:.85}
   .q-gracias{text-align:center;font-size:10.5px;font-weight:700;color:var(--d-ink);line-height:1.5}
   .q-gracias small{display:block;font-weight:500;color:var(--d-muted);font-size:9.5px;margin-top:2px}
-  .q-side-contact{border-top:1px solid rgba(43,36,51,.14);padding-top:12px}
-  .q-side-contact p{font-size:10.2px;color:#4A4156;margin:0 0 6px;display:flex;align-items:center;gap:6px;font-weight:600}
+  .q-side-contact{border-top:1px solid rgba(70,20,20,.14);padding-top:12px}
+  .q-side-contact p{font-size:10.2px;color:#4D3A3A;margin:0 0 6px;display:flex;align-items:center;gap:6px;font-weight:600}
   .q-side-contact p:last-child{margin-bottom:0}
 
   .q-doc-main{flex:1;min-width:0;padding:36px 40px 32px;background:#FFFCFA}
@@ -561,15 +561,15 @@
   .q-doc-title{font-size:18px;font-weight:800;color:var(--d-ink);margin:16px 0 20px;padding-bottom:14px;border-bottom:2px solid var(--d-blush)}
 
   .q-table{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:20px;font-size:12px}
-  .q-table thead th{background:var(--d-lav);padding:9px 8px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#5A4D78;font-weight:800;border:none}
+  .q-table thead th{background:var(--d-lav);padding:9px 8px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#8F1B1B;font-weight:800;border:none}
   .q-table thead th:first-child{border-radius:9px 0 0 9px}
   .q-table thead th:last-child{border-radius:0 9px 9px 0}
   .q-table tbody td{padding:10px 8px;border-bottom:1px solid var(--d-line);color:var(--d-ink)}
-  .q-table tbody tr:nth-child(even) td{background:#FBF8FE}
+  .q-table tbody tr:nth-child(even) td{background:#FFF6F6}
 
   .q-totals-wrap{display:flex;justify-content:flex-end;margin-bottom:22px}
   .q-totals{width:280px;display:flex;flex-direction:column;gap:5px}
-  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#5E5469;padding:2px 2px}
+  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#5E4545;padding:2px 2px}
   .q-totals-row.discount{color:#2F8A50;font-weight:700}
   .q-totals-grand{
     display:flex;justify-content:space-between;align-items:center;
@@ -580,13 +580,13 @@
   .q-totals-grand .amt{color:#fff}
 
   .q-note{font-size:11px;background:var(--d-peach);border-left:3px solid var(--rojo);border-radius:0 9px 9px 0;padding:10px 14px;margin-bottom:16px;color:#7A3A2B}
-  .q-notes-block{font-size:11px;color:#5E5469;margin-bottom:16px;line-height:1.6;background:var(--d-sky);border-radius:10px;padding:11px 14px}
-  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#3E6A9C;font-weight:800;display:block;margin-bottom:4px}
+  .q-notes-block{font-size:11px;color:#5E4545;margin-bottom:16px;line-height:1.6;background:#FDEEEE;border-radius:10px;padding:11px 14px}
+  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#9E1B1B;font-weight:800;display:block;margin-bottom:4px}
 
   .q-terms{border-top:1px solid var(--d-line);padding-top:13px;margin-bottom:26px;font-size:9px;color:var(--d-muted);line-height:1.7}
 
   .q-signs{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:4px;margin-bottom:6px}
-  .q-signs div{border-top:1px solid #BDB2CC;text-align:center;padding-top:7px;font-size:10.5px;color:var(--d-muted)}
+  .q-signs div{border-top:1px solid #DDA9A9;text-align:center;padding-top:7px;font-size:10.5px;color:var(--d-muted)}
 
   /* Insignias de estado en tonos pastel */
   #doc-render .badge.Pendiente{background:#FFF0D6;color:#9A6410;border:1px solid #F5D9A3}
