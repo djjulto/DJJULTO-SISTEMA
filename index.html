@@ -476,8 +476,10 @@
   #doc-render, #catalog-render{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render *, #catalog-render *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   #doc-render{
-    background:#141414;width:100%;max-width:840px;margin:0 auto;box-sizing:border-box;
-    font-family:'Poppins',Arial,sans-serif;color:#F0E6E6;
+    --d-ink:#2B2433; --d-muted:#7A6F86; --d-line:#E7E0EE; --d-accent:#C8415B;
+    --d-lav:#EFEAFB; --d-blush:#FCE8EE; --d-peach:#FFEFE3; --d-mint:#E2F4E8; --d-sky:#E3EEFB;
+    background:#FFFCFA;width:100%;max-width:840px;margin:0 auto;box-sizing:border-box;
+    font-family:'Poppins',Arial,sans-serif;color:var(--d-ink);
     display:flex;align-items:stretch;
   }
 
@@ -497,67 +499,101 @@
   .doc-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
   .doc-status-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}
 
-  /* ---------- Cotización: diseño de dos columnas (rail + contenido, ambos oscuros) ---------- */
+  /* ---------- Cotización / Factura: diseño pastel de dos columnas ----------
+     Rail izquierdo en degradado lavanda → rosa suave, con tarjetas blancas
+     translúcidas; panel principal marfil. El logo (que es blanco) va sobre una
+     placa negra de marca, igual que en el catálogo, para que siempre se lea. */
   .q-doc-side{
-    width:250px;flex-shrink:0;background:linear-gradient(165deg,#1E1E1E 0%,#0A0A0A 100%);color:#fff;
-    padding:40px 26px 30px;display:flex;flex-direction:column;
-    border-right:1px solid rgba(214,40,40,.18);
+    width:262px;flex-shrink:0;color:var(--d-ink);
+    background:linear-gradient(170deg,#EAE3FA 0%,#F6E6F0 55%,#FDE9E4 100%);
+    padding:34px 22px 26px;display:flex;flex-direction:column;gap:14px;
+    border-right:1px solid var(--d-line);
   }
-  .q-side-logo{margin-bottom:16px}
-  .q-side-logo img{max-width:175px;max-height:58px;object-fit:contain;display:block}
-  .q-side-logo .logo-fallback-side{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
-  .q-side-brand{font-size:14.5px;font-weight:800;letter-spacing:.3px;margin-bottom:2px}
-  .q-side-tagline{font-size:10px;color:#F0B6B6;margin-bottom:20px}
-  .q-side-divider{height:2px;background:linear-gradient(90deg,var(--rojo),#F4B6B6);width:34px;margin-bottom:22px}
-  .q-side-block{margin-bottom:20px}
-  .q-side-block h5{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--rojo);font-weight:700;margin:0 0 7px}
-  .q-side-block p{font-size:10.8px;color:#E3C9C9;margin:0 0 3px;line-height:1.55;word-break:break-word}
-  .q-side-block p strong{color:#fff}
-  .q-side-spacer{flex:1;min-height:12px}
-  .q-side-contact{border-top:1px solid rgba(255,255,255,.14);padding-top:15px;margin-top:6px}
-  .q-side-contact p{font-size:10px;color:#E3C9C9;margin:0 0 7px;display:flex;align-items:center;gap:6px}
+  .q-side-brandbox{text-align:center;margin-bottom:2px}
+  .q-side-logo{display:flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin:0 auto 11px;background:#141414;border-radius:12px;padding:10px 16px;box-shadow:0 6px 14px -6px rgba(43,36,51,.45)}
+  .q-side-logo img{max-width:170px;max-height:54px;object-fit:contain;display:block}
+  .q-side-logo .logo-fallback-side{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .q-side-brand{font-size:13.5px;font-weight:800;letter-spacing:.4px;color:var(--d-ink)}
+  .q-side-tagline{font-size:10px;color:var(--d-accent);font-weight:700;margin-top:2px}
+
+  .q-side-card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);border-radius:12px;padding:12px 13px;box-shadow:0 4px 12px -8px rgba(43,36,51,.25)}
+  .q-side-card h5{font-size:8.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--d-accent);font-weight:800;margin:0 0 7px}
+  .q-side-card p{font-size:10.6px;color:#4A4156;margin:0 0 3px;line-height:1.5;word-break:break-word}
+  .q-side-card p strong{color:var(--d-ink);font-size:11.5px}
+  .q-side-card p:last-child{margin-bottom:0}
+
+  /* Fecha del evento, en grande */
+  .q-fecha{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+  .q-fecha-caja{flex:none;width:52px;text-align:center;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 10px -5px rgba(43,36,51,.4);border:1px solid var(--d-line)}
+  .q-fecha-mes{background:linear-gradient(90deg,var(--rojo),#E4577A);color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 0}
+  .q-fecha-dia{font-size:22px;font-weight:800;line-height:1.15;color:var(--d-ink);padding:2px 0 0}
+  .q-fecha-anio{font-size:8.5px;color:var(--d-muted);font-weight:700;padding-bottom:3px}
+  .q-fecha-info{font-size:10.6px;color:#4A4156;line-height:1.5}
+  .q-fecha-info strong{display:block;font-size:11.5px;color:var(--d-ink)}
+
+  /* Barra de avance de pago */
+  .q-pago-fila{display:flex;justify-content:space-between;font-size:10.6px;color:#4A4156;margin-bottom:3px}
+  .q-pago-fila strong{color:var(--d-ink)}
+  .q-pago-barra{height:8px;border-radius:999px;background:rgba(43,36,51,.1);overflow:hidden;margin:8px 0 6px}
+  .q-pago-barra span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7BCB9A,#4CAF6D)}
+  .q-pago-pie{font-size:9.5px;color:var(--d-muted);font-weight:600}
+
+  .q-rider-lista{margin:0;padding-left:15px}
+  .q-rider-lista li{font-size:10.4px;color:#4A4156;line-height:1.5;margin-bottom:2px}
+
+  .q-side-spacer{flex:0 0 0}
+  /* Ecualizador decorativo (guiño DJ) + agradecimiento */
+  .q-eq{display:flex;align-items:flex-end;justify-content:center;gap:5px;flex:1;min-height:46px;max-height:190px}
+  .q-eq i{display:block;width:7px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#E4577A,#C9B6F0);opacity:.85}
+  .q-gracias{text-align:center;font-size:10.5px;font-weight:700;color:var(--d-ink);line-height:1.5}
+  .q-gracias small{display:block;font-weight:500;color:var(--d-muted);font-size:9.5px;margin-top:2px}
+  .q-side-contact{border-top:1px solid rgba(43,36,51,.14);padding-top:12px}
+  .q-side-contact p{font-size:10.2px;color:#4A4156;margin:0 0 6px;display:flex;align-items:center;gap:6px;font-weight:600}
   .q-side-contact p:last-child{margin-bottom:0}
 
-  .q-doc-main{flex:1;min-width:0;padding:38px 42px 34px;background:#141414}
+  .q-doc-main{flex:1;min-width:0;padding:36px 40px 32px;background:#FFFCFA}
   .q-doc-topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
-  .q-doc-tag{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--rojo);font-weight:700}
-  .q-doc-number{font-size:21px;font-weight:800;color:#FBEAEA;margin-top:3px;white-space:nowrap}
-  .q-doc-date{font-size:10.5px;color:#9C7F7F;margin-top:2px}
+  .q-doc-tag{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:var(--d-accent);font-weight:800}
+  .q-doc-number{font-size:22px;font-weight:800;color:var(--d-ink);margin-top:3px;white-space:nowrap}
+  .q-doc-date{font-size:10.5px;color:var(--d-muted);margin-top:2px}
   .q-doc-topbar .badge{margin-top:2px}
 
-  .q-doc-title{font-size:18px;font-weight:800;color:#FBEAEA;margin:16px 0 22px;padding-bottom:14px;border-bottom:1px solid rgba(214,40,40,.25)}
+  .q-doc-title{font-size:18px;font-weight:800;color:var(--d-ink);margin:16px 0 20px;padding-bottom:14px;border-bottom:2px solid var(--d-blush)}
 
-  .q-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px}
-  .q-table thead th{padding:8px 6px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#F0B6B6;border-bottom:2px solid rgba(214,40,40,.4);font-weight:700}
-  .q-table tbody td{padding:10px 6px;border-bottom:1px solid rgba(255,255,255,.08);color:#EDE0E0}
-  .q-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.025)}
+  .q-table{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:20px;font-size:12px}
+  .q-table thead th{background:var(--d-lav);padding:9px 8px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#5A4D78;font-weight:800;border:none}
+  .q-table thead th:first-child{border-radius:9px 0 0 9px}
+  .q-table thead th:last-child{border-radius:0 9px 9px 0}
+  .q-table tbody td{padding:10px 8px;border-bottom:1px solid var(--d-line);color:var(--d-ink)}
+  .q-table tbody tr:nth-child(even) td{background:#FBF8FE}
 
   .q-totals-wrap{display:flex;justify-content:flex-end;margin-bottom:22px}
-  .q-totals{width:270px;display:flex;flex-direction:column;gap:5px}
-  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#C9A8A8;padding:2px 2px}
-  .q-totals-row.discount{color:#8FDBA8;font-weight:700}
+  .q-totals{width:280px;display:flex;flex-direction:column;gap:5px}
+  .q-totals-row{display:flex;justify-content:space-between;font-size:12px;color:#5E5469;padding:2px 2px}
+  .q-totals-row.discount{color:#2F8A50;font-weight:700}
   .q-totals-grand{
     display:flex;justify-content:space-between;align-items:center;
-    background:linear-gradient(90deg,var(--rojo),var(--rojo-osc));color:#fff;
-    padding:12px 14px;border-radius:8px;margin-top:6px;font-size:15.5px;font-weight:800;
+    background:linear-gradient(90deg,var(--rojo),#B3223A);color:#fff;
+    padding:12px 15px;border-radius:10px;margin-top:6px;font-size:15.5px;font-weight:800;
+    box-shadow:0 8px 16px -8px rgba(214,40,40,.6);
   }
   .q-totals-grand .amt{color:#fff}
 
-  .q-note{font-size:11px;background:rgba(214,40,40,.14);border-left:3px solid var(--rojo);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:18px;color:#F7C9C9}
-  .q-notes-block{font-size:11px;color:#C9A8A8;margin-bottom:18px;line-height:1.6}
-  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:#9C7F7F;font-weight:700;display:block;margin-bottom:5px}
+  .q-note{font-size:11px;background:var(--d-peach);border-left:3px solid var(--rojo);border-radius:0 9px 9px 0;padding:10px 14px;margin-bottom:16px;color:#7A3A2B}
+  .q-notes-block{font-size:11px;color:#5E5469;margin-bottom:16px;line-height:1.6;background:var(--d-sky);border-radius:10px;padding:11px 14px}
+  .q-notes-block .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:#3E6A9C;font-weight:800;display:block;margin-bottom:4px}
 
-  .q-terms{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;margin-bottom:26px;font-size:9px;color:#8A7373;line-height:1.7}
+  .q-terms{border-top:1px solid var(--d-line);padding-top:13px;margin-bottom:26px;font-size:9px;color:var(--d-muted);line-height:1.7}
 
   .q-signs{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:4px;margin-bottom:6px}
-  .q-signs div{border-top:1px solid rgba(255,255,255,.2);text-align:center;padding-top:7px;font-size:10.5px;color:#C9A8A8}
+  .q-signs div{border-top:1px solid #BDB2CC;text-align:center;padding-top:7px;font-size:10.5px;color:var(--d-muted)}
 
-  /* Insignias de estado sobre fondo oscuro: relleno translúcido + borde,
-     en vez del relleno pastel usado sobre fondo blanco en el resto de la app. */
-  #doc-render .badge.Pendiente{background:rgba(232,167,61,.18);color:var(--amarillo);border:1px solid rgba(232,167,61,.4)}
-  #doc-render .badge.Confirmada{background:rgba(59,111,160,.22);color:#8FC1EE;border:1px solid rgba(59,111,160,.45)}
-  #doc-render .badge.Completada{background:rgba(76,175,109,.18);color:#7FDB9F;border:1px solid rgba(76,175,109,.4)}
-  #doc-render .badge.Declinado{background:rgba(214,40,40,.18);color:#FF8A8A;border:1px solid rgba(214,40,40,.45)}
+  /* Insignias de estado en tonos pastel */
+  #doc-render .badge.Pendiente{background:#FFF0D6;color:#9A6410;border:1px solid #F5D9A3}
+  #doc-render .badge.Confirmada{background:var(--d-sky);color:#2F5F94;border:1px solid #BCD5F0}
+  #doc-render .badge.Completada{background:var(--d-mint);color:#25693F;border:1px solid #B5E0C3}
+  #doc-render .badge.Declinado{background:var(--d-blush);color:#A32A3F;border:1px solid #F2BFCA}
+  #doc-render .doc-footer{color:var(--d-muted)}
 
   /* ---------- CATÁLOGO EXPORTABLE (PDF) ---------- */
   #catalog-render{
@@ -3601,7 +3637,7 @@ async function generarFacturaPDF(q){
   try{
     el.innerHTML = buildDocHTML(q, true);
     await nextFrame();
-    await elementToPdfAndSave(el, `factura-${pad5(q.numero)}.pdf`);
+    await elementToPdfAndSave(el, `factura-${pad5(q.numero)}.pdf`, '#FFFCFA');
     toast('Factura descargada');
   }catch(err){
     console.error('Error al generar la factura:', err);
@@ -3624,9 +3660,10 @@ document.getElementById('ver-estado-select').addEventListener('change', function
 });
 
 function buildDocHTML(q, esFactura){
-  // Diseño de dos columnas: un rail oscuro (marca, cliente, evento, pago y
-  // contacto) y un panel principal claro (servicios, totales, términos y
-  // firmas). El logo va directo sobre el rail oscuro, sin placa adicional.
+  // Diseño pastel de dos columnas. Rail izquierdo (marca, cliente, fecha del
+  // evento, avance de pago, datos de pago, rider y contacto) y panel principal
+  // marfil (servicios, totales, notas, términos y firmas). El logo es blanco,
+  // así que va sobre una placa negra de marca para que se lea sobre el pastel.
   const logoHtml = settings.logo
     ? `<img src="${settings.logo}" alt="Logo">`
     : `<div class="logo-fallback-side">DJ</div>`;
@@ -3651,14 +3688,51 @@ function buildDocHTML(q, esFactura){
   const subtotalNeto = tieneDescuento ? (q.subtotalNeto != null ? q.subtotalNeto : q.subtotal - q.descuentoMonto) : q.subtotal;
   const etiquetaDescuento = q.descuentoTipo === 'porcentaje' ? `Descuento (${q.descuentoValor}%)` : 'Descuento';
 
+  // Fecha del evento en formato "calendario" (mes / día / año), si se puede leer.
+  const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const mFecha = /^(\d{4})-(\d{2})-(\d{2})/.exec(q.fechaEvento || '');
+  const horaTxt = q.horaEvento ? formatoHora12(q.horaEvento) + (q.horaFin ? ' – ' + formatoHora12(q.horaFin) : '') : '';
+  const lugarTxt = q.lugarEvento || q.clienteLugar || '';
+  const eventoHtml = `
+    ${mFecha ? `<div class="q-fecha">
+      <div class="q-fecha-caja"><div class="q-fecha-mes">${MESES[+mFecha[2]-1] || ''}</div><div class="q-fecha-dia">${+mFecha[3]}</div><div class="q-fecha-anio">${mFecha[1]}</div></div>
+      <div class="q-fecha-info">${horaTxt ? `<strong>${horaTxt}</strong>` : ''}${q.tipoActividad ? escapeHtml(q.tipoActividad) : ''}</div>
+    </div>` : `<p>${escapeHtml(q.fechaEvento||'-')}${horaTxt ? ' · ' + horaTxt : ''}</p>${q.tipoActividad ? `<p>${escapeHtml(q.tipoActividad)}</p>` : ''}`}
+    ${lugarTxt ? `<p>📍 ${escapeHtml(lugarTxt)}</p>` : ''}
+  `;
+
+  // Avance de pago: anticipo recibido vs. total, con barra de progreso.
+  const anticipo = q.anticipo || 0;
+  const saldo = Math.max(0, (q.total||0) - anticipo);
+  const pctPagado = q.total > 0 ? Math.min(100, Math.round(anticipo / q.total * 100)) : 0;
+  const pagoHtml = (q.total > 0) ? `
+    <div class="q-side-card">
+      <h5>Resumen de pago</h5>
+      <div class="q-pago-fila"><span>Total</span><strong>${money(q.total)}</strong></div>
+      ${anticipo > 0 ? `<div class="q-pago-fila"><span>Anticipo recibido</span><strong>${money(anticipo)}</strong></div>` : ''}
+      <div class="q-pago-fila"><span>Saldo pendiente</span><strong>${money(saldo)}</strong></div>
+      ${anticipo > 0 ? `<div class="q-pago-barra"><span style="width:${pctPagado}%"></span></div>
+      <div class="q-pago-pie">${saldo <= 0 ? 'Pagado en su totalidad' : pctPagado + '% pagado'}</div>` : ''}
+    </div>` : '';
+
+  const riderHtml = (q.riderSeleccionado && q.riderSeleccionado.length) ? `
+    <div class="q-side-card">
+      <h5>Rider del DJ — requisitos</h5>
+      <ul class="q-rider-lista">${q.riderSeleccionado.map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul>
+    </div>` : '';
+
+  const eqAlturas = [30,55,40,75,50,90,60,100,70,45,85,55,35,65,40];
+  const eqHtml = `<div class="q-eq">${eqAlturas.map(h=>`<i style="height:${h}%"></i>`).join('')}</div>`;
+
   return `
     <div class="q-doc-side">
-      <div class="q-side-logo">${logoHtml}</div>
-      <div class="q-side-brand">${escapeHtml(settings.nombreComercial||'DJ JULTO THE SHOW')}</div>
-      <div class="q-side-tagline">${escapeHtml(settings.instagram||'')}</div>
-      <div class="q-side-divider"></div>
+      <div class="q-side-brandbox">
+        <div class="q-side-logo">${logoHtml}</div>
+        <div class="q-side-brand">${escapeHtml(settings.nombreComercial||'DJ JULTO THE SHOW')}</div>
+        <div class="q-side-tagline">${escapeHtml(settings.instagram||'')}</div>
+      </div>
 
-      <div class="q-side-block">
+      <div class="q-side-card">
         <h5>Cliente</h5>
         <p><strong>${escapeHtml(q.clienteNombre||'')}</strong></p>
         <p>${escapeHtml(q.clienteTelefono||'-')}</p>
@@ -3666,21 +3740,26 @@ function buildDocHTML(q, esFactura){
         ${q.clienteTipoActividad ? `<p>${escapeHtml(q.clienteTipoActividad)}</p>` : ''}
       </div>
 
-      <div class="q-side-block">
+      <div class="q-side-card">
         <h5>Evento</h5>
-        <p>${q.fechaEvento||'-'}${q.horaEvento ? ' · ' + formatoHora12(q.horaEvento) + (q.horaFin ? ' – ' + formatoHora12(q.horaFin) : '') : ''}</p>
-        ${q.tipoActividad ? `<p>${escapeHtml(q.tipoActividad)}</p>` : ''}
-        ${q.lugarEvento ? `<p>📍 ${escapeHtml(q.lugarEvento)}</p>` : (q.clienteLugar ? `<p>${escapeHtml(q.clienteLugar)}</p>` : '')}
+        ${eventoHtml}
       </div>
 
+      ${pagoHtml}
+
       ${bankLines.length ? `
-      <div class="q-side-block">
+      <div class="q-side-card">
         <h5>Datos de pago</h5>
         ${bankLines.map(l=>`<p>${l}</p>`).join('')}
         ${titularLine ? `<p>${escapeHtml(titularLine)}</p>` : ''}
       </div>` : ''}
 
+      ${riderHtml}
+
       <div class="q-side-spacer"></div>
+
+      ${eqHtml}
+      <div class="q-gracias">¡Gracias por confiar en nosotros!<small>Hacemos que tu evento sea inolvidable</small></div>
 
       <div class="q-side-contact">
         ${settings.whatsapp ? `<p>📱 ${formatWhatsApp(settings.whatsapp)}</p>` : ''}
@@ -3699,7 +3778,7 @@ function buildDocHTML(q, esFactura){
       </div>
 
       <h3 class="q-doc-title">${escapeHtml(q.nombreShow || 'Propuesta de servicios')}</h3>
-      ${esFactura ? `<div class="q-note" style="background:var(--menta-suave);border-left-color:var(--verde);color:#1f5a35">Servicio completado — esta factura confirma el cierre del contrato.</div>` : ''}
+      ${esFactura ? `<div class="q-note" style="background:var(--d-mint);border-left-color:var(--verde);color:#25693F">Servicio completado — esta factura confirma el cierre del contrato.</div>` : ''}
 
       <table class="q-table">
         <thead><tr><th>Servicio</th><th style="text-align:center">Cant.</th><th style="text-align:right">Precio</th><th style="text-align:right">Subtotal</th></tr></thead>
@@ -3717,10 +3796,8 @@ function buildDocHTML(q, esFactura){
         </div>
       </div>
 
-      ${q.tipoContrato ? `<div class="q-note" style="background:var(--rojo-claro);border-left-color:var(--rojo);color:var(--rojo-osc)">Tipo de contrato: ${escapeHtml(q.tipoContrato)}</div>` : ''}
+      ${q.tipoContrato ? `<div class="q-note">Tipo de contrato: ${escapeHtml(q.tipoContrato)}</div>` : ''}
       ${q.comprobanteFiscal ? `<div class="q-note">Con comprobante fiscal — RNC: ${escapeHtml(q.ncf||'N/A')}</div>` : ''}
-
-      ${(q.riderSeleccionado && q.riderSeleccionado.length) ? `<div class="q-notes-block"><span class="lbl">Rider del DJ — requisitos para el evento</span><ul class="q-rider-lista">${q.riderSeleccionado.map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul></div>` : ''}
 
       ${q.notas ? `<div class="q-notes-block"><span class="lbl">Notas</span>${escapeHtml(q.notas)}</div>` : ''}
 
@@ -3739,8 +3816,8 @@ function buildDocHTML(q, esFactura){
 /* Genera un PDF de una sola página, con alto ajustado exactamente al
    contenido del elemento, para que nunca se corte nada a la mitad. Se
    reutiliza tanto para la cotización (Ver/PDF) como para el catálogo. */
-async function elementToPdfAndSave(el, filename){
-  const canvas = await html2canvas(el, {scale:2, backgroundColor:'#141414'});
+async function elementToPdfAndSave(el, filename, fondo){
+  const canvas = await html2canvas(el, {scale:2, backgroundColor: fondo || '#141414'});
   const imgData = canvas.toDataURL('image/png');
   const { jsPDF } = window.jspdf;
   const widthMM = 210; // ancho A4
@@ -3757,7 +3834,7 @@ document.getElementById('btn-descargar-pdf').addEventListener('click', async ()=
   btn.disabled = true; btn.textContent = 'Generando...';
   try{
     const q = quotes.find(x=>x.id===currentViewingQuoteId);
-    await elementToPdfAndSave(el, `cotizacion-${q ? pad5(q.numero) : 'djjulto'}.pdf`);
+    await elementToPdfAndSave(el, `cotizacion-${q ? pad5(q.numero) : 'djjulto'}.pdf`, '#FFFCFA');
   }catch(err){
     console.error(err);
     toast('Error al generar el PDF');
@@ -5546,8 +5623,12 @@ function buildPlanesPdfHTML(){
               // "Tiempo" con la nota "Animación básica incluida". En VIP y The Show
               // se queda con su nombre y descripción normales.
               const esTiempo = key === 'basico' && /^\s*tiempo\b/i.test(it.descripcion || '');
+              // En todos los planes, "Flete" lleva una descripción corta fija.
+              const esFlete = /^\s*flete\b/i.test(it.descripcion || '');
               const nombreMostrado = esTiempo ? 'Tiempo' : it.descripcion;
-              const detalleMostrado = esTiempo ? 'Animación básica incluida' : it.detalle;
+              const detalleMostrado = esTiempo ? 'Animación básica incluida'
+                : esFlete ? 'Transporte del artista y TEAM Julto'
+                : it.detalle;
               return `
               <tr>
                 <td>
